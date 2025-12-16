@@ -24,14 +24,29 @@ public class ReadyItemStockService {
     @Transactional
     public ReadyItemStockDTO recordDailyStock(Long readyItemId, LocalDate date, BigDecimal openingStock,
                                               BigDecimal quantityProduced, BigDecimal quantitySold) {
+        return recordDailyStock(readyItemId, date, null, openingStock, quantityProduced, quantitySold);
+    }
+
+    @Transactional
+    public ReadyItemStockDTO recordDailyStock(Long readyItemId, LocalDate date, String quality,
+                                              BigDecimal openingStock, BigDecimal quantityProduced, BigDecimal quantitySold) {
         ReadyItem readyItem = readyItemRepository.findById(readyItemId)
                 .orElseThrow(() -> new RuntimeException("Ready item not found with id: " + readyItemId));
 
-        ReadyItemStock stock = stockRepository.findByReadyItemIdAndStockDate(readyItemId, date)
-                .orElse(new ReadyItemStock());
+        ReadyItemStock stock;
+        if (quality != null) {
+            stock = stockRepository.findByReadyItemIdAndStockDateAndQuality(readyItemId, date, quality)
+                    .orElse(new ReadyItemStock());
+        } else {
+            stock = stockRepository.findByReadyItemIdAndStockDate(readyItemId, date)
+                    .orElse(new ReadyItemStock());
+        }
 
         stock.setReadyItem(readyItem);
         stock.setStockDate(date);
+        if (quality != null) {
+            stock.setQuality(quality);
+        }
         stock.setOpeningStock(openingStock);
         stock.setQuantityProduced(quantityProduced);
         stock.setQuantitySold(quantitySold);
@@ -43,9 +58,19 @@ public class ReadyItemStockService {
     }
 
     public BigDecimal getCurrentStock(Long readyItemId) {
-        return stockRepository.findFirstByReadyItemIdOrderByStockDateDesc(readyItemId)
-                .map(ReadyItemStock::getClosingStock)
-                .orElse(BigDecimal.ZERO);
+        return getCurrentStock(readyItemId, null);
+    }
+
+    public BigDecimal getCurrentStock(Long readyItemId, String quality) {
+        if (quality != null) {
+            return stockRepository.findFirstByReadyItemIdAndQualityOrderByStockDateDesc(readyItemId, quality)
+                    .map(ReadyItemStock::getClosingStock)
+                    .orElse(BigDecimal.ZERO);
+        } else {
+            return stockRepository.findFirstByReadyItemIdOrderByStockDateDesc(readyItemId)
+                    .map(ReadyItemStock::getClosingStock)
+                    .orElse(BigDecimal.ZERO);
+        }
     }
 
     public ReadyItemStockDTO getStockByDate(Long readyItemId, LocalDate date) {
@@ -60,6 +85,76 @@ public class ReadyItemStockService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional
+    public void deductStock(Long readyItemId, String quality, BigDecimal quantity, LocalDate date) {
+        if (quantity.compareTo(BigDecimal.ZERO) <= 0) {
+            return;
+        }
+
+        BigDecimal currentStock = getCurrentStock(readyItemId, quality);
+        if (currentStock.compareTo(quantity) < 0) {
+            ReadyItem readyItem = readyItemRepository.findById(readyItemId)
+                    .orElseThrow(() -> new RuntimeException("Ready item not found with id: " + readyItemId));
+            throw new RuntimeException("Insufficient stock for ReadyItem " + readyItem.getName() +
+                    ", Quality " + quality + ". Required: " + quantity + ", Available: " + currentStock);
+        }
+
+        ReadyItem readyItem = readyItemRepository.findById(readyItemId)
+                .orElseThrow(() -> new RuntimeException("Ready item not found with id: " + readyItemId));
+
+        ReadyItemStock stock = stockRepository.findByReadyItemIdAndStockDateAndQuality(readyItemId, date, quality)
+                .orElse(new ReadyItemStock());
+
+        if (stock.getId() == null) {
+            // New stock record for this date/quality
+            stock.setReadyItem(readyItem);
+            stock.setStockDate(date);
+            stock.setQuality(quality);
+            stock.setOpeningStock(currentStock);
+            stock.setQuantityProduced(BigDecimal.ZERO);
+            stock.setQuantitySold(quantity);
+            stock.setUnit(readyItem.getUnit());
+        } else {
+            // Update existing stock record
+            stock.setQuantitySold(stock.getQuantitySold().add(quantity));
+        }
+
+        stock.setClosingStock(calculateClosingStock(stock.getOpeningStock(), stock.getQuantityProduced(), stock.getQuantitySold()));
+        stockRepository.save(stock);
+    }
+
+    @Transactional
+    public void addStock(Long readyItemId, String quality, BigDecimal quantity, LocalDate date) {
+        if (quantity.compareTo(BigDecimal.ZERO) <= 0) {
+            return;
+        }
+
+        ReadyItem readyItem = readyItemRepository.findById(readyItemId)
+                .orElseThrow(() -> new RuntimeException("Ready item not found with id: " + readyItemId));
+
+        ReadyItemStock stock = stockRepository.findByReadyItemIdAndStockDateAndQuality(readyItemId, date, quality)
+                .orElse(new ReadyItemStock());
+
+        if (stock.getId() == null) {
+            // If no stock record exists for this date, get the latest stock as opening
+            BigDecimal currentStock = getCurrentStock(readyItemId, quality);
+            stock.setReadyItem(readyItem);
+            stock.setStockDate(date);
+            stock.setQuality(quality);
+            stock.setOpeningStock(currentStock);
+            stock.setQuantityProduced(BigDecimal.ZERO);
+            // For reversal, reduce quantitySold (negative means we're returning stock)
+            stock.setQuantitySold(quantity.negate());
+            stock.setUnit(readyItem.getUnit());
+        } else {
+            // Update existing stock record - reduce quantity sold
+            stock.setQuantitySold(stock.getQuantitySold().subtract(quantity));
+        }
+
+        stock.setClosingStock(calculateClosingStock(stock.getOpeningStock(), stock.getQuantityProduced(), stock.getQuantitySold()));
+        stockRepository.save(stock);
+    }
+
     private BigDecimal calculateClosingStock(BigDecimal openingStock, BigDecimal quantityProduced, BigDecimal quantitySold) {
         return openingStock.add(quantityProduced).subtract(quantitySold);
     }
@@ -69,6 +164,7 @@ public class ReadyItemStockService {
         dto.setId(stock.getId());
         dto.setReadyItemId(stock.getReadyItem().getId());
         dto.setStockDate(stock.getStockDate());
+        dto.setQuality(stock.getQuality());
         dto.setOpeningStock(stock.getOpeningStock());
         dto.setClosingStock(stock.getClosingStock());
         dto.setQuantityProduced(stock.getQuantityProduced());

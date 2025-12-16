@@ -10,6 +10,8 @@ import java.util.List;
 public interface SalesItemRepository extends JpaRepository<SalesItem, Long> {
     List<SalesItem> findBySalesOrderId(Long salesOrderId);
     List<SalesItem> findByGoodsTypeId(Long goodsTypeId);
+    List<SalesItem> findByReadyItemId(Long readyItemId);
+    List<SalesItem> findByReadyItemIdAndQuality(Long readyItemId, String quality);
     List<SalesItem> findByDeletedAtIsNull();
 }
 

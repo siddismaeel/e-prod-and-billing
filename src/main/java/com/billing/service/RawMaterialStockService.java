@@ -82,9 +82,69 @@ public class RawMaterialStockService {
     }
 
     @Transactional
+    public void addStock(Long rawMaterialId, BigDecimal quantity, LocalDate date) {
+        if (quantity.compareTo(BigDecimal.ZERO) <= 0) {
+            return;
+        }
+
+        RawMaterial rawMaterial = rawMaterialRepository.findById(rawMaterialId)
+                .orElseThrow(() -> new RuntimeException("Raw material not found with id: " + rawMaterialId));
+
+        RawMaterialStock stock = stockRepository.findByRawMaterialIdAndStockDate(rawMaterialId, date)
+                .orElse(new RawMaterialStock());
+
+        if (stock.getId() == null) {
+            // New stock record for this date
+            BigDecimal currentStock = getCurrentStock(rawMaterialId);
+            stock.setRawMaterial(rawMaterial);
+            stock.setStockDate(date);
+            stock.setOpeningStock(currentStock);
+            stock.setQuantityAdded(quantity);
+            stock.setQuantityConsumed(BigDecimal.ZERO);
+            stock.setUnit(rawMaterial.getUnit());
+        } else {
+            // Update existing stock record
+            stock.setQuantityAdded(stock.getQuantityAdded().add(quantity));
+        }
+
+        stock.setClosingStock(calculateClosingStock(stock.getOpeningStock(), stock.getQuantityAdded(), stock.getQuantityConsumed()));
+        stockRepository.save(stock);
+    }
+
+    @Transactional
+    public void removeStock(Long rawMaterialId, BigDecimal quantity, LocalDate date) {
+        if (quantity.compareTo(BigDecimal.ZERO) <= 0) {
+            return;
+        }
+
+        RawMaterial rawMaterial = rawMaterialRepository.findById(rawMaterialId)
+                .orElseThrow(() -> new RuntimeException("Raw material not found with id: " + rawMaterialId));
+
+        RawMaterialStock stock = stockRepository.findByRawMaterialIdAndStockDate(rawMaterialId, date)
+                .orElse(new RawMaterialStock());
+
+        if (stock.getId() == null) {
+            // If no stock record exists, get the latest stock as opening
+            BigDecimal currentStock = getCurrentStock(rawMaterialId);
+            stock.setRawMaterial(rawMaterial);
+            stock.setStockDate(date);
+            stock.setOpeningStock(currentStock);
+            stock.setQuantityAdded(BigDecimal.ZERO.subtract(quantity)); // Negative means removal
+            stock.setQuantityConsumed(BigDecimal.ZERO);
+            stock.setUnit(rawMaterial.getUnit());
+        } else {
+            // Update existing stock record - reduce quantity added
+            stock.setQuantityAdded(stock.getQuantityAdded().subtract(quantity));
+        }
+
+        stock.setClosingStock(calculateClosingStock(stock.getOpeningStock(), stock.getQuantityAdded(), stock.getQuantityConsumed()));
+        stockRepository.save(stock);
+    }
+
+    @Transactional
     public void updateStockFromPurchaseOrder(Long purchaseOrderId) {
-        // This will be implemented when PurchaseOrder integration is added
-        // For now, it's a placeholder
+        // This method is now handled by PurchaseOrderService
+        // Keeping for backward compatibility but implementation moved to service layer
     }
 
     private BigDecimal calculateClosingStock(BigDecimal openingStock, BigDecimal quantityAdded, BigDecimal quantityConsumed) {

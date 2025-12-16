@@ -1,6 +1,5 @@
 package com.billing.service;
 
-import com.billing.dto.MaterialConsumptionDTO;
 import com.billing.dto.ProductionDTO;
 import com.billing.entity.MaterialConsumption;
 import com.billing.entity.Production;
@@ -87,9 +86,9 @@ public class ProductionService {
                     BigDecimal.ZERO, entry.getValue());
         }
 
-        // Update ready item stock
-        BigDecimal currentReadyStock = readyItemStockService.getCurrentStock(dto.getReadyItemId());
-        readyItemStockService.recordDailyStock(dto.getReadyItemId(), today, currentReadyStock,
+        // Update ready item stock (with quality)
+        BigDecimal currentReadyStock = readyItemStockService.getCurrentStock(dto.getReadyItemId(), dto.getQuality());
+        readyItemStockService.recordDailyStock(dto.getReadyItemId(), today, dto.getQuality(), currentReadyStock,
                 dto.getQuantityProduced(), BigDecimal.ZERO);
 
         // Check propositions and update ReadyItem with impact data

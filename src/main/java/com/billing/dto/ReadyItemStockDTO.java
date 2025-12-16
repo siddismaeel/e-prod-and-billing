@@ -22,6 +22,8 @@ public class ReadyItemStockDTO {
     @NotNull(message = "Stock date is required")
     private LocalDate stockDate;
 
+    private String quality; // Nullable for backward compatibility
+
     @NotNull(message = "Opening stock is required")
     @PositiveOrZero(message = "Opening stock must be positive or zero")
     private BigDecimal openingStock;

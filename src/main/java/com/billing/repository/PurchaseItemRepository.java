@@ -10,6 +10,8 @@ import java.util.List;
 public interface PurchaseItemRepository extends JpaRepository<PurchaseItem, Long> {
     List<PurchaseItem> findByPurchaseOrderId(Long purchaseOrderId);
     List<PurchaseItem> findByGoodsTypeId(Long goodsTypeId);
+    List<PurchaseItem> findByRawMaterialId(Long rawMaterialId);
+    List<PurchaseItem> findByRawMaterialIdAndDeletedAtIsNull(Long rawMaterialId);
     List<PurchaseItem> findByDeletedAtIsNull();
 }
 

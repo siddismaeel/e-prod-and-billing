@@ -12,7 +12,9 @@ import java.util.Optional;
 public interface ReadyItemStockRepository extends JpaRepository<ReadyItemStock, Long> {
     List<ReadyItemStock> findByReadyItemId(Long readyItemId);
     Optional<ReadyItemStock> findByReadyItemIdAndStockDate(Long readyItemId, LocalDate stockDate);
+    Optional<ReadyItemStock> findByReadyItemIdAndStockDateAndQuality(Long readyItemId, LocalDate stockDate, String quality);
     Optional<ReadyItemStock> findFirstByReadyItemIdOrderByStockDateDesc(Long readyItemId);
+    Optional<ReadyItemStock> findFirstByReadyItemIdAndQualityOrderByStockDateDesc(Long readyItemId, String quality);
     List<ReadyItemStock> findByReadyItemIdAndStockDateBetween(Long readyItemId, LocalDate startDate, LocalDate endDate);
 }
 

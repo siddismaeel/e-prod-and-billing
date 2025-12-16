@@ -10,7 +10,9 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Entity
-@Table(name = "ready_item_stocks")
+@Table(name = "ready_item_stocks", uniqueConstraints = {
+    @UniqueConstraint(columnNames = {"ready_item_id", "stock_date", "quality"})
+})
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -23,6 +25,9 @@ public class ReadyItemStock extends BaseModel {
 
     @Column(name = "stock_date", nullable = false)
     private LocalDate stockDate;
+
+    @Column(nullable = false)
+    private String quality;
 
     @Column(name = "opening_stock", nullable = false)
     private BigDecimal openingStock;

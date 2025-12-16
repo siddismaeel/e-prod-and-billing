@@ -25,6 +25,10 @@ public class PurchaseItem extends BaseModel {
     @JoinColumn(name = "goods_type_id", nullable = false)
     private GoodsType goodsType;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "raw_material_id", nullable = false)
+    private RawMaterial rawMaterial;
+
     @Column(nullable = false)
     private BigDecimal quantity;
 

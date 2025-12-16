@@ -1,0 +1,325 @@
+// Billing System Database Schema
+// Generated for dbdiagram.io
+// Import this file at https://dbdiagram.io
+
+// ============================================
+// Master Data Tables
+// ============================================
+
+Table customers {
+  id bigint [pk, increment]
+  name varchar [not null]
+  contact varchar [not null]
+  address varchar
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table goods_types {
+  id bigint [pk, increment]
+  name varchar [not null]
+  is_deleted boolean
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table raw_materials {
+  id bigint [pk, increment]
+  name varchar [not null]
+  code varchar [not null, unique]
+  unit varchar [not null]
+  description varchar
+  goods_type_id bigint [ref: > goods_types.id]
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table ready_items {
+  id bigint [pk, increment]
+  name varchar [not null]
+  code varchar [not null, unique]
+  unit varchar [not null]
+  description varchar
+  goods_type_id bigint [ref: > goods_types.id]
+  quality_impact varchar
+  cost_impact varchar
+  extra_quantity_used decimal
+  less_quantity_used decimal
+  percentage_deviation decimal
+  last_proposition_check timestamp
+  created_at timestamp
+  updated_at timestamp
+}
+
+// ============================================
+// Order Management Tables
+// ============================================
+
+Table purchase_orders {
+  id bigint [pk, increment]
+  customer_id bigint [ref: > customers.id, not null]
+  order_date date [not null]
+  total_amount decimal [not null]
+  paid_amount decimal [not null]
+  balance_payment decimal [not null]
+  payment_status varchar [not null]
+  remarks varchar
+  deleted_at timestamp
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table purchase_items {
+  id bigint [pk, increment]
+  purchase_order_id bigint [ref: > purchase_orders.id, not null]
+  goods_type_id bigint [ref: > goods_types.id, not null]
+  quantity decimal [not null]
+  unit_price decimal [not null]
+  total_price decimal [not null]
+  rate decimal [not null]
+  report decimal [not null]
+  remarks varchar
+  deleted_at timestamp
+  net_quantity decimal
+  fringe_cost decimal
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table sales_orders {
+  id bigint [pk, increment]
+  customer_id bigint [ref: > customers.id, not null]
+  order_date date [not null]
+  total_amount decimal [not null]
+  paid_amount decimal [not null]
+  balance_payment decimal [not null]
+  payment_status varchar [not null]
+  remarks varchar
+  deleted_at timestamp
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table sales_items {
+  id bigint [pk, increment]
+  sales_order_id bigint [ref: > sales_orders.id, not null]
+  ready_item_id bigint [ref: > ready_items.id, not null]
+  goods_type_id bigint [ref: > goods_types.id, not null]
+  quality varchar [not null]
+  quantity decimal [not null]
+  unit_price decimal [not null]
+  total_price decimal [not null]
+  rate decimal [not null]
+  report decimal [not null]
+  remarks varchar
+  deleted_at timestamp
+  created_at timestamp
+  updated_at timestamp
+}
+
+// ============================================
+// Production Management Tables
+// ============================================
+
+Table productions {
+  id bigint [pk, increment]
+  ready_item_id bigint [ref: > ready_items.id, not null]
+  quality varchar [not null]
+  quantity_produced decimal [not null]
+  production_date date [not null]
+  batch_number varchar
+  remarks varchar
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table production_recipes {
+  id bigint [pk, increment]
+  ready_item_id bigint [ref: > ready_items.id, not null]
+  raw_material_id bigint [ref: > raw_materials.id, not null]
+  quality varchar [not null]
+  quantity_required decimal [not null]
+  unit varchar [not null]
+  created_at timestamp
+  updated_at timestamp
+  
+  indexes {
+    (ready_item_id, raw_material_id, quality) [unique]
+  }
+}
+
+Table material_consumptions {
+  id bigint [pk, increment]
+  raw_material_id bigint [ref: > raw_materials.id, not null]
+  ready_item_id bigint [ref: > ready_items.id]
+  quantity decimal [not null]
+  consumption_type varchar [not null]
+  production_batch_id bigint
+  date date [not null]
+  remarks varchar
+  created_at timestamp
+  updated_at timestamp
+}
+
+// ============================================
+// Stock Management Tables
+// ============================================
+
+Table raw_material_stocks {
+  id bigint [pk, increment]
+  raw_material_id bigint [ref: > raw_materials.id, not null]
+  stock_date date [not null]
+  opening_stock decimal [not null]
+  closing_stock decimal [not null]
+  quantity_added decimal [not null]
+  quantity_consumed decimal [not null]
+  unit varchar [not null]
+  remarks varchar
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table ready_item_stocks {
+  id bigint [pk, increment]
+  ready_item_id bigint [ref: > ready_items.id, not null]
+  stock_date date [not null]
+  quality varchar [not null]
+  opening_stock decimal [not null]
+  closing_stock decimal [not null]
+  quantity_produced decimal [not null]
+  quantity_sold decimal [not null]
+  unit varchar [not null]
+  remarks varchar
+  created_at timestamp
+  updated_at timestamp
+  
+  indexes {
+    (ready_item_id, stock_date, quality) [unique]
+  }
+}
+
+// ============================================
+// Quality Monitoring Tables
+// ============================================
+
+Table propositions {
+  id bigint [pk, increment]
+  ready_item_id bigint [ref: > ready_items.id, not null]
+  raw_material_id bigint [ref: > raw_materials.id, not null]
+  expected_percentage decimal [not null]
+  created_at timestamp
+  updated_at timestamp
+  
+  indexes {
+    (ready_item_id, raw_material_id) [unique]
+  }
+}
+
+// ============================================
+// HR Management Tables
+// ============================================
+
+Table employees {
+  id bigint [pk, increment]
+  name varchar [not null]
+  contact varchar [not null]
+  address varchar
+  is_active boolean
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table tenures {
+  id bigint [pk, increment]
+  employee_id bigint [ref: > employees.id, not null]
+  start_date date [not null]
+  end_date date
+  salary decimal [not null]
+  final_settlement_amount decimal
+  is_active boolean
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table attendances {
+  id bigint [pk, increment]
+  employee_id bigint [ref: > employees.id, not null]
+  tenure_id bigint [ref: > tenures.id, not null]
+  date date [not null]
+  was_present boolean [not null]
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table salaries {
+  id bigint [pk, increment]
+  employee_id bigint [ref: > employees.id, not null]
+  payament_date date [not null]
+  amount decimal [not null]
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table kharchas {
+  id bigint [pk, increment]
+  employee_id bigint [ref: > employees.id, not null]
+  tenure_id bigint [ref: > tenures.id, not null]
+  amount decimal [not null]
+  date date [not null]
+  description varchar
+  created_at timestamp
+  updated_at timestamp
+}
+
+// ============================================
+// System Tables
+// ============================================
+
+Table cash {
+  id bigint [pk, increment]
+  date date [not null]
+  debit decimal [not null]
+  credit decimal [not null]
+  balance decimal [not null]
+  remarks varchar
+  createdAt timestamp
+  updatedAt timestamp
+}
+
+Table users {
+  id bigint [pk, increment]
+  pin varchar [not null]
+  roles json
+  created_at timestamp
+  updated_at timestamp
+}
+
+// ============================================
+// Relationship Notes
+// ============================================
+
+// Order Management:
+// - Customer has many PurchaseOrders and SalesOrders
+// - PurchaseOrder has many PurchaseItems
+// - SalesOrder has many SalesItems
+// - SalesItem links to ReadyItem with quality specification
+
+// Production Flow:
+// - ReadyItem has many Productions (by quality)
+// - ProductionRecipe defines material requirements per quality
+// - MaterialConsumption tracks actual usage
+// - Production generates MaterialConsumption records
+
+// Stock Management:
+// - RawMaterial has daily stock records (RawMaterialStock)
+// - ReadyItem has daily stock records by quality (ReadyItemStock)
+// - ReadyItemStock unique constraint: (ready_item_id, stock_date, quality)
+
+// Quality Monitoring:
+// - Proposition tracks expected consumption percentages
+// - Used to calculate quality/cost impact on ReadyItem
+
+// HR Management:
+// - Employee has many Tenures, Attendances, Salaries, Kharchas
+// - Attendance and Kharcha link to Tenure
+
