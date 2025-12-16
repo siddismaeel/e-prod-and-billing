@@ -25,6 +25,7 @@ public class SalesOrderService {
     private final ReadyItemRepository readyItemRepository;
     private final GoodsTypeRepository goodsTypeRepository;
     private final ReadyItemStockService readyItemStockService;
+    private final CustomerAccountService customerAccountService;
 
     @Transactional
     public SalesOrderDTO upsertSalesOrder(SalesOrderDTO dto) {
@@ -81,6 +82,9 @@ public class SalesOrderService {
         // Deduct stock for all items
         deductStockFromOrder(salesItems, dto.getOrderDate());
 
+        // Update customer account
+        customerAccountService.updateAccountFromSalesOrder(salesOrder);
+
         return convertToDTO(salesOrder, salesItems);
     }
 
@@ -95,6 +99,9 @@ public class SalesOrderService {
         // Soft delete
         salesOrder.setDeletedAt(LocalDateTime.now());
         salesOrderRepository.save(salesOrder);
+
+        // Update customer account (recalculate after deletion)
+        customerAccountService.updateAccountFromSalesOrder(salesOrder);
     }
 
     public SalesOrderDTO getSalesOrder(Long id) {

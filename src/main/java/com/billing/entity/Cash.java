@@ -33,6 +33,17 @@ public class Cash extends BaseModel {
     @Column(nullable = false)
     private BigDecimal balance;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "payment_transaction_id")
+    private PaymentTransaction paymentTransaction;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "customer_id")
+    private Customer customer;
+
+    @Column(name = "transaction_type")
+    private String transactionType; // Values: "CUSTOMER_PAYMENT", "CUSTOMER_RECEIPT", "OTHER"
+
     private String remarks;
 }
 

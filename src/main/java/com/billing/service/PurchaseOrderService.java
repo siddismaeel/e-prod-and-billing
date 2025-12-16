@@ -25,6 +25,7 @@ public class PurchaseOrderService {
     private final RawMaterialRepository rawMaterialRepository;
     private final GoodsTypeRepository goodsTypeRepository;
     private final RawMaterialStockService rawMaterialStockService;
+    private final CustomerAccountService customerAccountService;
 
     @Transactional
     public PurchaseOrderDTO upsertPurchaseOrder(PurchaseOrderDTO dto) {
@@ -78,6 +79,9 @@ public class PurchaseOrderService {
         // Add stock for all items
         addStockFromOrder(purchaseItems, dto.getOrderDate());
 
+        // Update customer account
+        customerAccountService.updateAccountFromPurchaseOrder(purchaseOrder);
+
         return convertToDTO(purchaseOrder, purchaseItems);
     }
 
@@ -92,6 +96,9 @@ public class PurchaseOrderService {
         // Soft delete
         purchaseOrder.setDeletedAt(LocalDateTime.now());
         purchaseOrderRepository.save(purchaseOrder);
+
+        // Update customer account (recalculate after deletion)
+        customerAccountService.updateAccountFromPurchaseOrder(purchaseOrder);
     }
 
     public PurchaseOrderDTO getPurchaseOrder(Long id) {
