@@ -43,5 +43,13 @@ public class CustomerAccount extends BaseModel {
 
     @Column(name = "last_transaction_date")
     private LocalDate lastTransactionDate;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "organization_id")
+    private Organization organization;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "company_id")
+    private Company company;
 }
 

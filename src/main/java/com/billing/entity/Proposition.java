@@ -28,5 +28,13 @@ public class Proposition extends BaseModel {
 
     @Column(name = "expected_percentage", nullable = false)
     private BigDecimal expectedPercentage;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "organization_id")
+    private Organization organization;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "company_id")
+    private Company company;
 }
 

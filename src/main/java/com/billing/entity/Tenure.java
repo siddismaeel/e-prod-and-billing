@@ -42,5 +42,13 @@ public class Tenure extends BaseModel {
 
     @OneToMany(mappedBy = "tenure", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Kharcha> kharchas;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "organization_id")
+    private Organization organization;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "company_id")
+    private Company company;
 }
 

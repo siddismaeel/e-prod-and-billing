@@ -49,6 +49,14 @@ public class ReadyItem extends BaseModel {
 
     @Column(name = "last_proposition_check")
     private LocalDateTime lastPropositionCheck;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "organization_id")
+    private Organization organization;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "company_id")
+    private Company company;
 }
 
 

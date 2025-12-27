@@ -29,5 +29,13 @@ public class Attendance extends BaseModel {
 
     @Column(name = "was_present", nullable = false)
     private Boolean wasPresent;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "organization_id")
+    private Organization organization;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "company_id")
+    private Company company;
 }
 

@@ -45,5 +45,13 @@ public class Cash extends BaseModel {
     private String transactionType; // Values: "CUSTOMER_PAYMENT", "CUSTOMER_RECEIPT", "OTHER"
 
     private String remarks;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "organization_id")
+    private Organization organization;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "company_id")
+    private Company company;
 }
 

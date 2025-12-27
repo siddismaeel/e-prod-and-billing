@@ -54,5 +54,13 @@ public class PurchaseItem extends BaseModel {
 
     @Column(name = "fringe_cost")
     private BigDecimal fringeCost;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "organization_id")
+    private Organization organization;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "company_id")
+    private Company company;
 }
 

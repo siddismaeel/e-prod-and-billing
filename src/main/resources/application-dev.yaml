@@ -1,0 +1,65 @@
+server:
+  port: 8087
+spring:
+  application:
+    name: Billing
+#  main:
+#    web-application-type: reactive
+  datasource:
+    url: jdbc:mysql://localhost:3306/erm2
+    username: root
+    password: 2116
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      minimum-idle: 5
+      maximum-pool-size: 10
+      idle-timeout: 30000
+      pool-name: HikariPool-1
+      max-lifetime: 1800000
+      connection-timeout: 20000
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+    show-sql: true
+
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+
+  cache:
+    type: redis
+  data:
+    redis:
+      host: localhost
+      port: 6379
+  #  redis:
+#    port: 6379
+#  logging:
+#  level:
+#    org.springframework.cache: DEBUG
+
+  eureka:
+    client:
+      service-url:
+        defaultZone: http://localhost:8761/eureka/
+      register-with-eureka: true
+      fetch-registry: true
+    server:
+      enable-self-preservation: false
+
+aws:
+  access:
+    key:
+      id: AKIA377NXCHOXUVLXXS2
+  secret:
+    access:
+      key: ${AWS_ACCESS_KEY_ID}
+  region: ${AWS_SECRET_ACCESS_KEY}
+#logging:
+#  level:
+#    org.springframework.security: DEBUG
