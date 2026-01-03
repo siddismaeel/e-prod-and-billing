@@ -31,6 +31,16 @@ import BusinessIcon from '@mui/icons-material/Business';
 import SecurityIcon from '@mui/icons-material/Security';
 import LinkIcon from '@mui/icons-material/Link';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
+import FactoryIcon from '@mui/icons-material/Factory';
+import ScienceIcon from '@mui/icons-material/Science';
+import MenuBookIcon from '@mui/icons-material/MenuBook';
+import TrendingUpIcon from '@mui/icons-material/TrendingUp';
+import Inventory2Icon from '@mui/icons-material/Inventory2';
+import PaymentIcon from '@mui/icons-material/Payment';
+import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
+import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+import ShoppingBagIcon from '@mui/icons-material/ShoppingBag';
+import PointOfSaleIcon from '@mui/icons-material/PointOfSale';
 
 const drawerWidth = 240;
 
@@ -52,6 +62,19 @@ const Sidebar = ({ mobileOpen, onMobileClose }) => {
   const [branchOpen, setBranchOpen] = useState(false);
   const [departmentOpen, setDepartmentOpen] = useState(false);
   const [usersOpen, setUsersOpen] = useState(false);
+  const [customerOpen, setCustomerOpen] = useState(false);
+  const [rawMaterialOpen, setRawMaterialOpen] = useState(false);
+  const [readyItemOpen, setReadyItemOpen] = useState(false);
+  const [salesOrderOpen, setSalesOrderOpen] = useState(false);
+  const [purchaseOrderOpen, setPurchaseOrderOpen] = useState(false);
+  const [productionOpen, setProductionOpen] = useState(false);
+  const [materialConsumptionOpen, setMaterialConsumptionOpen] = useState(false);
+  const [productionRecipeOpen, setProductionRecipeOpen] = useState(false);
+  const [propositionOpen, setPropositionOpen] = useState(false);
+  const [stockOpen, setStockOpen] = useState(false);
+  const [paymentOpen, setPaymentOpen] = useState(false);
+  const [cashflowOpen, setCashflowOpen] = useState(false);
+  const [customerAccountOpen, setCustomerAccountOpen] = useState(false);
 
   const handleDrawerToggle = () => {
     onMobileClose();
@@ -79,6 +102,54 @@ const Sidebar = ({ mobileOpen, onMobileClose }) => {
 
   const handleUsersClick = () => {
     setUsersOpen(!usersOpen);
+  };
+
+  const handleRawMaterialClick = () => {
+    setRawMaterialOpen(!rawMaterialOpen);
+  };
+
+  const handleReadyItemClick = () => {
+    setReadyItemOpen(!readyItemOpen);
+  };
+
+  const handleSalesOrderClick = () => {
+    setSalesOrderOpen(!salesOrderOpen);
+  };
+
+  const handlePurchaseOrderClick = () => {
+    setPurchaseOrderOpen(!purchaseOrderOpen);
+  };
+
+  const handleProductionClick = () => {
+    setProductionOpen(!productionOpen);
+  };
+
+  const handleMaterialConsumptionClick = () => {
+    setMaterialConsumptionOpen(!materialConsumptionOpen);
+  };
+
+  const handleProductionRecipeClick = () => {
+    setProductionRecipeOpen(!productionRecipeOpen);
+  };
+
+  const handlePropositionClick = () => {
+    setPropositionOpen(!propositionOpen);
+  };
+
+  const handleStockClick = () => {
+    setStockOpen(!stockOpen);
+  };
+
+  const handlePaymentClick = () => {
+    setPaymentOpen(!paymentOpen);
+  };
+
+  const handleCashflowClick = () => {
+    setCashflowOpen(!cashflowOpen);
+  };
+
+  const handleCustomerAccountClick = () => {
+    setCustomerAccountOpen(!customerAccountOpen);
   };
 
   const handleNavigation = (path) => {
@@ -345,6 +416,461 @@ const Sidebar = ({ mobileOpen, onMobileClose }) => {
                 <ListIcon />
               </ListItemIcon>
               <ListItemText primary="List Users" />
+            </ListItemButton>
+          </List>
+        </Collapse>
+
+        {/* Customer Menu */}
+        <ListItem disablePadding>
+          <ListItemButton onClick={() => setCustomerOpen(!customerOpen)}>
+            <ListItemIcon>
+              <PeopleIcon />
+            </ListItemIcon>
+            <ListItemText primary="Customer" />
+            {customerOpen ? <ExpandLess /> : <ExpandMore />}
+          </ListItemButton>
+        </ListItem>
+        <Collapse in={customerOpen} timeout="auto" unmountOnExit>
+          <List component="div" disablePadding>
+            <ListItemButton
+              sx={{ pl: 4 }}
+              selected={location.pathname === '/customers/create'}
+              onClick={() => handleNavigation('/customers/create')}
+            >
+              <ListItemIcon>
+                <AddIcon />
+              </ListItemIcon>
+              <ListItemText primary="Create Customer" />
+            </ListItemButton>
+            <ListItemButton
+              sx={{ pl: 4 }}
+              selected={location.pathname === '/customers/list'}
+              onClick={() => handleNavigation('/customers/list')}
+            >
+              <ListItemIcon>
+                <ListIcon />
+              </ListItemIcon>
+              <ListItemText primary="List Customer" />
+            </ListItemButton>
+          </List>
+        </Collapse>
+
+        {/* Raw Material Menu */}
+        <ListItem disablePadding>
+          <ListItemButton onClick={handleRawMaterialClick}>
+            <ListItemIcon>
+              <InventoryIcon />
+            </ListItemIcon>
+            <ListItemText primary="Raw Material" />
+            {rawMaterialOpen ? <ExpandLess /> : <ExpandMore />}
+          </ListItemButton>
+        </ListItem>
+        <Collapse in={rawMaterialOpen} timeout="auto" unmountOnExit>
+          <List component="div" disablePadding>
+            <ListItemButton
+              sx={{ pl: 4 }}
+              selected={location.pathname === '/raw-materials/create'}
+              onClick={() => handleNavigation('/raw-materials/create')}
+            >
+              <ListItemIcon>
+                <AddIcon />
+              </ListItemIcon>
+              <ListItemText primary="Create Raw Material" />
+            </ListItemButton>
+            <ListItemButton
+              sx={{ pl: 4 }}
+              selected={location.pathname === '/raw-materials/list'}
+              onClick={() => handleNavigation('/raw-materials/list')}
+            >
+              <ListItemIcon>
+                <ListIcon />
+              </ListItemIcon>
+              <ListItemText primary="List Raw Material" />
+            </ListItemButton>
+          </List>
+        </Collapse>
+
+        {/* Ready Item Menu */}
+        <ListItem disablePadding>
+          <ListItemButton onClick={handleReadyItemClick}>
+            <ListItemIcon>
+              <ShoppingCartIcon />
+            </ListItemIcon>
+            <ListItemText primary="Ready Item" />
+            {readyItemOpen ? <ExpandLess /> : <ExpandMore />}
+          </ListItemButton>
+        </ListItem>
+        <Collapse in={readyItemOpen} timeout="auto" unmountOnExit>
+          <List component="div" disablePadding>
+            <ListItemButton
+              sx={{ pl: 4 }}
+              selected={location.pathname === '/ready-items/create'}
+              onClick={() => handleNavigation('/ready-items/create')}
+            >
+              <ListItemIcon>
+                <AddIcon />
+              </ListItemIcon>
+              <ListItemText primary="Create Ready Item" />
+            </ListItemButton>
+            <ListItemButton
+              sx={{ pl: 4 }}
+              selected={location.pathname === '/ready-items/list'}
+              onClick={() => handleNavigation('/ready-items/list')}
+            >
+              <ListItemIcon>
+                <ListIcon />
+              </ListItemIcon>
+              <ListItemText primary="List Ready Item" />
+            </ListItemButton>
+          </List>
+        </Collapse>
+
+        {/* Sales Order Menu */}
+        <ListItem disablePadding>
+          <ListItemButton onClick={handleSalesOrderClick}>
+            <ListItemIcon>
+              <PointOfSaleIcon />
+            </ListItemIcon>
+            <ListItemText primary="Sales Order" />
+            {salesOrderOpen ? <ExpandLess /> : <ExpandMore />}
+          </ListItemButton>
+        </ListItem>
+        <Collapse in={salesOrderOpen} timeout="auto" unmountOnExit>
+          <List component="div" disablePadding>
+            <ListItemButton
+              sx={{ pl: 4 }}
+              selected={location.pathname === '/sales-orders/create'}
+              onClick={() => handleNavigation('/sales-orders/create')}
+            >
+              <ListItemIcon>
+                <AddIcon />
+              </ListItemIcon>
+              <ListItemText primary="Create Sales Order" />
+            </ListItemButton>
+            <ListItemButton
+              sx={{ pl: 4 }}
+              selected={location.pathname === '/sales-orders/list'}
+              onClick={() => handleNavigation('/sales-orders/list')}
+            >
+              <ListItemIcon>
+                <ListIcon />
+              </ListItemIcon>
+              <ListItemText primary="List Sales Order" />
+            </ListItemButton>
+          </List>
+        </Collapse>
+
+        {/* Purchase Order Menu */}
+        <ListItem disablePadding>
+          <ListItemButton onClick={handlePurchaseOrderClick}>
+            <ListItemIcon>
+              <ShoppingBagIcon />
+            </ListItemIcon>
+            <ListItemText primary="Purchase Order" />
+            {purchaseOrderOpen ? <ExpandLess /> : <ExpandMore />}
+          </ListItemButton>
+        </ListItem>
+        <Collapse in={purchaseOrderOpen} timeout="auto" unmountOnExit>
+          <List component="div" disablePadding>
+            <ListItemButton
+              sx={{ pl: 4 }}
+              selected={location.pathname === '/purchase-orders/create'}
+              onClick={() => handleNavigation('/purchase-orders/create')}
+            >
+              <ListItemIcon>
+                <AddIcon />
+              </ListItemIcon>
+              <ListItemText primary="Create Purchase Order" />
+            </ListItemButton>
+            <ListItemButton
+              sx={{ pl: 4 }}
+              selected={location.pathname === '/purchase-orders/list'}
+              onClick={() => handleNavigation('/purchase-orders/list')}
+            >
+              <ListItemIcon>
+                <ListIcon />
+              </ListItemIcon>
+              <ListItemText primary="List Purchase Order" />
+            </ListItemButton>
+          </List>
+        </Collapse>
+
+        {/* Production Menu */}
+        <ListItem disablePadding>
+          <ListItemButton onClick={handleProductionClick}>
+            <ListItemIcon>
+              <FactoryIcon />
+            </ListItemIcon>
+            <ListItemText primary="Production" />
+            {productionOpen ? <ExpandLess /> : <ExpandMore />}
+          </ListItemButton>
+        </ListItem>
+        <Collapse in={productionOpen} timeout="auto" unmountOnExit>
+          <List component="div" disablePadding>
+            <ListItemButton
+              sx={{ pl: 4 }}
+              selected={location.pathname === '/productions/create'}
+              onClick={() => handleNavigation('/productions/create')}
+            >
+              <ListItemIcon>
+                <AddIcon />
+              </ListItemIcon>
+              <ListItemText primary="Create Production" />
+            </ListItemButton>
+            <ListItemButton
+              sx={{ pl: 4 }}
+              selected={location.pathname === '/productions/list'}
+              onClick={() => handleNavigation('/productions/list')}
+            >
+              <ListItemIcon>
+                <ListIcon />
+              </ListItemIcon>
+              <ListItemText primary="List Production" />
+            </ListItemButton>
+          </List>
+        </Collapse>
+
+        {/* Material Consumption Menu */}
+        <ListItem disablePadding>
+          <ListItemButton onClick={handleMaterialConsumptionClick}>
+            <ListItemIcon>
+              <ScienceIcon />
+            </ListItemIcon>
+            <ListItemText primary="Material Consumption" />
+            {materialConsumptionOpen ? <ExpandLess /> : <ExpandMore />}
+          </ListItemButton>
+        </ListItem>
+        <Collapse in={materialConsumptionOpen} timeout="auto" unmountOnExit>
+          <List component="div" disablePadding>
+            <ListItemButton
+              sx={{ pl: 4 }}
+              selected={location.pathname === '/material-consumptions/create'}
+              onClick={() => handleNavigation('/material-consumptions/create')}
+            >
+              <ListItemIcon>
+                <AddIcon />
+              </ListItemIcon>
+              <ListItemText primary="Create Material Consumption" />
+            </ListItemButton>
+            <ListItemButton
+              sx={{ pl: 4 }}
+              selected={location.pathname === '/material-consumptions/list'}
+              onClick={() => handleNavigation('/material-consumptions/list')}
+            >
+              <ListItemIcon>
+                <ListIcon />
+              </ListItemIcon>
+              <ListItemText primary="List Material Consumption" />
+            </ListItemButton>
+          </List>
+        </Collapse>
+
+        {/* Production Recipe Menu */}
+        <ListItem disablePadding>
+          <ListItemButton onClick={handleProductionRecipeClick}>
+            <ListItemIcon>
+              <MenuBookIcon />
+            </ListItemIcon>
+            <ListItemText primary="Production Recipe" />
+            {productionRecipeOpen ? <ExpandLess /> : <ExpandMore />}
+          </ListItemButton>
+        </ListItem>
+        <Collapse in={productionRecipeOpen} timeout="auto" unmountOnExit>
+          <List component="div" disablePadding>
+            <ListItemButton
+              sx={{ pl: 4 }}
+              selected={location.pathname === '/production-recipes/create'}
+              onClick={() => handleNavigation('/production-recipes/create')}
+            >
+              <ListItemIcon>
+                <AddIcon />
+              </ListItemIcon>
+              <ListItemText primary="Create Production Recipe" />
+            </ListItemButton>
+            <ListItemButton
+              sx={{ pl: 4 }}
+              selected={location.pathname === '/production-recipes/list'}
+              onClick={() => handleNavigation('/production-recipes/list')}
+            >
+              <ListItemIcon>
+                <ListIcon />
+              </ListItemIcon>
+              <ListItemText primary="List Production Recipe" />
+            </ListItemButton>
+          </List>
+        </Collapse>
+
+        {/* Proposition Menu */}
+        <ListItem disablePadding>
+          <ListItemButton onClick={handlePropositionClick}>
+            <ListItemIcon>
+              <TrendingUpIcon />
+            </ListItemIcon>
+            <ListItemText primary="Proposition" />
+            {propositionOpen ? <ExpandLess /> : <ExpandMore />}
+          </ListItemButton>
+        </ListItem>
+        <Collapse in={propositionOpen} timeout="auto" unmountOnExit>
+          <List component="div" disablePadding>
+            <ListItemButton
+              sx={{ pl: 4 }}
+              selected={location.pathname === '/propositions/create'}
+              onClick={() => handleNavigation('/propositions/create')}
+            >
+              <ListItemIcon>
+                <AddIcon />
+              </ListItemIcon>
+              <ListItemText primary="Create Proposition" />
+            </ListItemButton>
+            <ListItemButton
+              sx={{ pl: 4 }}
+              selected={location.pathname === '/propositions/list'}
+              onClick={() => handleNavigation('/propositions/list')}
+            >
+              <ListItemIcon>
+                <ListIcon />
+              </ListItemIcon>
+              <ListItemText primary="List Proposition" />
+            </ListItemButton>
+          </List>
+        </Collapse>
+
+        {/* Stock Menu */}
+        <ListItem disablePadding>
+          <ListItemButton onClick={handleStockClick}>
+            <ListItemIcon>
+              <Inventory2Icon />
+            </ListItemIcon>
+            <ListItemText primary="Stock" />
+            {stockOpen ? <ExpandLess /> : <ExpandMore />}
+          </ListItemButton>
+        </ListItem>
+        <Collapse in={stockOpen} timeout="auto" unmountOnExit>
+          <List component="div" disablePadding>
+            <ListItemButton
+              sx={{ pl: 4 }}
+              selected={location.pathname === '/stock/raw-material'}
+              onClick={() => handleNavigation('/stock/raw-material')}
+            >
+              <ListItemIcon>
+                <InventoryIcon />
+              </ListItemIcon>
+              <ListItemText primary="Raw Material Stock" />
+            </ListItemButton>
+            <ListItemButton
+              sx={{ pl: 4 }}
+              selected={location.pathname === '/stock/ready-item'}
+              onClick={() => handleNavigation('/stock/ready-item')}
+            >
+              <ListItemIcon>
+                <ShoppingCartIcon />
+              </ListItemIcon>
+              <ListItemText primary="Ready Item Stock" />
+            </ListItemButton>
+          </List>
+        </Collapse>
+
+        {/* Payment Menu */}
+        <ListItem disablePadding>
+          <ListItemButton onClick={handlePaymentClick}>
+            <ListItemIcon>
+              <PaymentIcon />
+            </ListItemIcon>
+            <ListItemText primary="Payment" />
+            {paymentOpen ? <ExpandLess /> : <ExpandMore />}
+          </ListItemButton>
+        </ListItem>
+        <Collapse in={paymentOpen} timeout="auto" unmountOnExit>
+          <List component="div" disablePadding>
+            <ListItemButton
+              sx={{ pl: 4 }}
+              selected={location.pathname === '/payments/create'}
+              onClick={() => handleNavigation('/payments/create')}
+            >
+              <ListItemIcon>
+                <AddIcon />
+              </ListItemIcon>
+              <ListItemText primary="Create Payment" />
+            </ListItemButton>
+            <ListItemButton
+              sx={{ pl: 4 }}
+              selected={location.pathname === '/payments/list'}
+              onClick={() => handleNavigation('/payments/list')}
+            >
+              <ListItemIcon>
+                <ListIcon />
+              </ListItemIcon>
+              <ListItemText primary="List Payment" />
+            </ListItemButton>
+          </List>
+        </Collapse>
+
+        {/* Cashflow Menu */}
+        <ListItem disablePadding>
+          <ListItemButton onClick={handleCashflowClick}>
+            <ListItemIcon>
+              <AccountBalanceIcon />
+            </ListItemIcon>
+            <ListItemText primary="Cashflow" />
+            {cashflowOpen ? <ExpandLess /> : <ExpandMore />}
+          </ListItemButton>
+        </ListItem>
+        <Collapse in={cashflowOpen} timeout="auto" unmountOnExit>
+          <List component="div" disablePadding>
+            <ListItemButton
+              sx={{ pl: 4 }}
+              selected={location.pathname === '/cashflow/list'}
+              onClick={() => handleNavigation('/cashflow/list')}
+            >
+              <ListItemIcon>
+                <ListIcon />
+              </ListItemIcon>
+              <ListItemText primary="List Cashflow" />
+            </ListItemButton>
+            <ListItemButton
+              sx={{ pl: 4 }}
+              selected={location.pathname === '/cashflow/create'}
+              onClick={() => handleNavigation('/cashflow/create')}
+            >
+              <ListItemIcon>
+                <AddIcon />
+              </ListItemIcon>
+              <ListItemText primary="Create Cashflow Entry" />
+            </ListItemButton>
+          </List>
+        </Collapse>
+
+        {/* Customer Account Menu */}
+        <ListItem disablePadding>
+          <ListItemButton onClick={handleCustomerAccountClick}>
+            <ListItemIcon>
+              <AccountCircleIcon />
+            </ListItemIcon>
+            <ListItemText primary="Customer Account" />
+            {customerAccountOpen ? <ExpandLess /> : <ExpandMore />}
+          </ListItemButton>
+        </ListItem>
+        <Collapse in={customerAccountOpen} timeout="auto" unmountOnExit>
+          <List component="div" disablePadding>
+            <ListItemButton
+              sx={{ pl: 4 }}
+              selected={location.pathname === '/customer-accounts/view'}
+              onClick={() => handleNavigation('/customer-accounts/view')}
+            >
+              <ListItemIcon>
+                <AccountCircleIcon />
+              </ListItemIcon>
+              <ListItemText primary="View Customer Account" />
+            </ListItemButton>
+            <ListItemButton
+              sx={{ pl: 4 }}
+              selected={location.pathname === '/customer-accounts/statement'}
+              onClick={() => handleNavigation('/customer-accounts/statement')}
+            >
+              <ListItemIcon>
+                <ReceiptIcon />
+              </ListItemIcon>
+              <ListItemText primary="Customer Account Statement" />
             </ListItemButton>
           </List>
         </Collapse>
