@@ -12,7 +12,7 @@ import { apiService } from './api';
  */
 export const recordPayment = async (paymentData) => {
   try {
-    const response = await apiService.post('/api/payments', paymentData);
+    const response = await apiService.post('/billing/api/payments', paymentData);
     return response.data?.data || response.data;
   } catch (error) {
     console.error('Error recording payment:', error);
@@ -28,7 +28,7 @@ export const recordPayment = async (paymentData) => {
  */
 export const updatePayment = async (id, paymentData) => {
   try {
-    const response = await apiService.put(`/api/payments/${id}`, paymentData);
+    const response = await apiService.put(`/billing/api/payments/${id}`, paymentData);
     return response.data?.data || response.data;
   } catch (error) {
     console.error('Error updating payment:', error);
@@ -43,7 +43,7 @@ export const updatePayment = async (id, paymentData) => {
  */
 export const deletePayment = async (id) => {
   try {
-    const response = await apiService.delete(`/api/payments/${id}`);
+    const response = await apiService.delete(`/billing/api/payments/${id}`);
     return response;
   } catch (error) {
     console.error('Error deleting payment:', error);
@@ -58,7 +58,7 @@ export const deletePayment = async (id) => {
  */
 export const getPaymentsByCustomer = async (customerId) => {
   try {
-    const response = await apiService.get(`/api/payments/customer/${customerId}`);
+    const response = await apiService.get(`/billing/api/payments/customer/${customerId}`);
     return response.data?.data || response.data || [];
   } catch (error) {
     console.error('Error fetching payments by customer:', error);
@@ -74,7 +74,7 @@ export const getPaymentsByCustomer = async (customerId) => {
  */
 export const getPaymentsByOrder = async (orderId, orderType) => {
   try {
-    const response = await apiService.get(`/api/payments/order/${orderId}`, {
+    const response = await apiService.get(`/billing/api/payments/order/${orderId}`, {
       params: { orderType }
     });
     return response.data?.data || response.data || [];
@@ -83,4 +83,5 @@ export const getPaymentsByOrder = async (orderId, orderType) => {
     throw error;
   }
 };
+
 

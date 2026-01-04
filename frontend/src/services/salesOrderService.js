@@ -11,7 +11,7 @@ import { apiService } from './api';
  */
 export const getAllSalesOrders = async () => {
   try {
-    const response = await apiService.get('/api/sales-orders');
+    const response = await apiService.get('/billing/api/sales-orders');
     return response.data?.data || response.data || [];
   } catch (error) {
     console.error('Error fetching sales orders:', error);
@@ -26,7 +26,7 @@ export const getAllSalesOrders = async () => {
  */
 export const getSalesOrderById = async (id) => {
   try {
-    const response = await apiService.get(`/api/sales-orders/${id}`);
+    const response = await apiService.get(`/billing/api/sales-orders/${id}`);
     return response.data?.data || response.data;
   } catch (error) {
     console.error('Error fetching sales order:', error);
@@ -41,7 +41,7 @@ export const getSalesOrderById = async (id) => {
  */
 export const upsertSalesOrder = async (salesOrderData) => {
   try {
-    const response = await apiService.post('/api/sales-orders', salesOrderData);
+    const response = await apiService.post('/billing/api/sales-orders', salesOrderData);
     return response.data?.data || response.data;
   } catch (error) {
     console.error('Error upserting sales order:', error);
@@ -56,11 +56,12 @@ export const upsertSalesOrder = async (salesOrderData) => {
  */
 export const deleteSalesOrder = async (id) => {
   try {
-    const response = await apiService.delete(`/api/sales-orders/${id}`);
+    const response = await apiService.delete(`/billing/api/sales-orders/${id}`);
     return response;
   } catch (error) {
     console.error('Error deleting sales order:', error);
     throw error;
   }
 };
+
 

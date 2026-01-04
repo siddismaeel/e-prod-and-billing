@@ -17,7 +17,7 @@ export const getCashFlow = async (startDate = null, endDate = null) => {
     if (startDate) params.startDate = startDate;
     if (endDate) params.endDate = endDate;
     
-    const response = await apiService.get('/api/cashflow', { params });
+    const response = await apiService.get('/billing/api/cashflow', { params });
     return response.data?.data || response.data || [];
   } catch (error) {
     console.error('Error fetching cashflow:', error);
@@ -32,11 +32,12 @@ export const getCashFlow = async (startDate = null, endDate = null) => {
  */
 export const recordCashEntry = async (cashData) => {
   try {
-    const response = await apiService.post('/api/cashflow', cashData);
+    const response = await apiService.post('/billing/api/cashflow', cashData);
     return response.data?.data || response.data;
   } catch (error) {
     console.error('Error recording cash entry:', error);
     throw error;
   }
 };
+
 

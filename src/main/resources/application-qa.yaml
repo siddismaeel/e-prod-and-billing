@@ -52,14 +52,14 @@ spring:
     server:
       enable-self-preservation: false
 
-aws:
-  access:
-    key:
-      id: AKIA377NXCHOXUVLXXS2
-  secret:
-    access:${AWS_ACCESS_KEY_ID}
-      key: ${AWS_SECRET_ACCESS_KEY}
-  region: ap-south-1
+#aws:
+#  access:
+ #   key:
+ #     id: AKIA377NXCHOXUVLXXS2
+ # secret:
+ #   access:${AWS_ACCESS_KEY_ID}
+ #     key: ${AWS_SECRET_ACCESS_KEY}
+#  region: ap-south-1
 #logging:
 #  level:
 #    org.springframework.security: DEBUG

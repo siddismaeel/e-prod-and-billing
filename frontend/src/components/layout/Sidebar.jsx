@@ -46,11 +46,11 @@ const drawerWidth = 240;
 
 const menuItems = [
   { text: 'Dashboard', icon: <DashboardIcon />, path: '/' },
-  { text: 'Sales Orders', icon: <ShoppingCartIcon />, path: '/sales-orders' },
-  { text: 'Purchase Orders', icon: <ReceiptIcon />, path: '/purchase-orders' },
-  { text: 'Inventory', icon: <InventoryIcon />, path: '/inventory' },
-  { text: 'Customers', icon: <PeopleIcon />, path: '/customers' },
-  { text: 'Settings', icon: <SettingsIcon />, path: '/settings' },
+  // { text: 'Sales Orders', icon: <ShoppingCartIcon />, path: '/sales-orders' },
+  // { text: 'Purchase Orders', icon: <ReceiptIcon />, path: '/purchase-orders' },
+  // { text: 'Inventory', icon: <InventoryIcon />, path: '/inventory' },
+  // { text: 'Customers', icon: <PeopleIcon />, path: '/customers' },
+  // { text: 'Settings', icon: <SettingsIcon />, path: '/settings' },
 ];
 
 const Sidebar = ({ mobileOpen, onMobileClose }) => {

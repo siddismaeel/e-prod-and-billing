@@ -12,7 +12,7 @@ import { apiService } from './api';
  */
 export const getAccount = async (customerId) => {
   try {
-    const response = await apiService.get(`/api/customer-accounts/${customerId}`);
+    const response = await apiService.get(`/billing/api/customer-accounts/${customerId}`);
     return response.data?.data || response.data;
   } catch (error) {
     console.error('Error fetching customer account:', error);
@@ -33,7 +33,7 @@ export const getAccountStatement = async (customerId, startDate = null, endDate 
     if (startDate) params.startDate = startDate;
     if (endDate) params.endDate = endDate;
     
-    const response = await apiService.get(`/api/customer-accounts/${customerId}/statement`, { params });
+    const response = await apiService.get(`/billing/api/customer-accounts/${customerId}/statement`, { params });
     return response.data?.data || response.data;
   } catch (error) {
     console.error('Error fetching account statement:', error);
@@ -48,7 +48,7 @@ export const getAccountStatement = async (customerId, startDate = null, endDate 
  */
 export const recalculateBalance = async (customerId) => {
   try {
-    const response = await apiService.post(`/api/customer-accounts/${customerId}/recalculate`);
+    const response = await apiService.post(`/billing/api/customer-accounts/${customerId}/recalculate`);
     return response.data?.data || response.data;
   } catch (error) {
     console.error('Error recalculating balance:', error);
@@ -63,11 +63,12 @@ export const recalculateBalance = async (customerId) => {
  */
 export const getPaymentHistory = async (customerId) => {
   try {
-    const response = await apiService.get(`/api/customer-accounts/${customerId}/transactions`);
+    const response = await apiService.get(`/billing/api/customer-accounts/${customerId}/transactions`);
     return response.data?.data || response.data || [];
   } catch (error) {
     console.error('Error fetching payment history:', error);
     throw error;
   }
 };
+
 

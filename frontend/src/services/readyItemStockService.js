@@ -57,3 +57,4 @@ export const getStockHistory = async (id, startDate, endDate) => {
   }
 };
 
+
