@@ -87,6 +87,9 @@ const CreateSalesOrder = () => {
   // Payment status options
   const paymentStatusOptions = ['PENDING', 'PAID', 'PARTIAL', 'OVERDUE'];
 
+  // Quality options
+  const qualityOptions = ['M1', 'M2', 'M3'];
+
   // Fetch dropdown data on component mount
   useEffect(() => {
     fetchCustomers();
@@ -612,16 +615,27 @@ const CreateSalesOrder = () => {
 
                           {/* Quality */}
                           <Grid item xs={12}>
-                            <TextField
-                              fullWidth
-                              label="Quality"
-                              value={item.quality}
-                              onChange={(e) => handleItemChange(index, 'quality', e.target.value)}
-                              error={!!errors[`item_${index}_quality`]}
-                              helperText={errors[`item_${index}_quality`]}
-                              required
-                              disabled={loading}
-                            />
+                            <FormControl fullWidth required error={!!errors[`item_${index}_quality`]} disabled={loading}>
+                              <InputLabel id={`quality-select-label-${index}`}>Quality</InputLabel>
+                              <Select
+                                labelId={`quality-select-label-${index}`}
+                                id={`quality-select-${index}`}
+                                value={item.quality}
+                                label="Quality"
+                                onChange={(e) => handleItemChange(index, 'quality', e.target.value)}
+                              >
+                                {qualityOptions.map((quality) => (
+                                  <MenuItem key={quality} value={quality}>
+                                    {quality}
+                                  </MenuItem>
+                                ))}
+                              </Select>
+                              {errors[`item_${index}_quality`] && (
+                                <Typography variant="caption" color="error" sx={{ mt: 0.5, display: 'block' }}>
+                                  {errors[`item_${index}_quality`]}
+                                </Typography>
+                              )}
+                            </FormControl>
                           </Grid>
 
                           {/* Goods Type */}
@@ -791,15 +805,23 @@ const CreateSalesOrder = () => {
                             </FormControl>
                           </TableCell>
                           <TableCell>
-                            <TextField
-                              size="small"
-                              value={item.quality}
-                              onChange={(e) => handleItemChange(index, 'quality', e.target.value)}
-                              error={!!errors[`item_${index}_quality`]}
-                              disabled={loading}
-                              sx={{ width: 120 }}
-                              required
-                            />
+                            <FormControl fullWidth size="small" error={!!errors[`item_${index}_quality`]} disabled={loading}>
+                              <Select
+                                value={item.quality}
+                                onChange={(e) => handleItemChange(index, 'quality', e.target.value)}
+                                displayEmpty
+                                sx={{ width: 120 }}
+                              >
+                                <MenuItem value="">
+                                  <em>Select</em>
+                                </MenuItem>
+                                {qualityOptions.map((quality) => (
+                                  <MenuItem key={quality} value={quality}>
+                                    {quality}
+                                  </MenuItem>
+                                ))}
+                              </Select>
+                            </FormControl>
                           </TableCell>
                           <TableCell>
                             <FormControl fullWidth size="small" error={!!errors[`item_${index}_goodsTypeId`]}>

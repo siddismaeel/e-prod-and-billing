@@ -1,16 +1,43 @@
-import { useState } from 'react';
-import { Container, Typography, Paper, Box, TextField, Button, Grid, Alert, CircularProgress } from '@mui/material';
+import { useState, useEffect } from 'react';
+import { Container, Typography, Paper, Box, TextField, Button, Grid, Alert, CircularProgress, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
 import FactoryIcon from '@mui/icons-material/Factory';
 import AddIcon from '@mui/icons-material/Add';
 import SaveIcon from '@mui/icons-material/Save';
 import ClearIcon from '@mui/icons-material/Clear';
 import { produceReadyItem } from '../../services/productionService';
+import { getAllReadyItems } from '../../services/readyItemService';
 
 const CreateProduction = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [formData, setFormData] = useState({ readyItemId: '', quantity: '', quality: '', productionDate: new Date().toISOString().split('T')[0] });
+
+  // Ready items dropdown data
+  const [readyItems, setReadyItems] = useState([]);
+  const [loadingReadyItems, setLoadingReadyItems] = useState(true);
+
+  // Quality options
+  const qualityOptions = ['M1', 'M2', 'M3'];
+
+  // Fetch ready items on component mount
+  useEffect(() => {
+    fetchReadyItems();
+  }, []);
+
+  // Fetch ready items
+  const fetchReadyItems = async () => {
+    try {
+      setLoadingReadyItems(true);
+      const data = await getAllReadyItems();
+      setReadyItems(data || []);
+    } catch (err) {
+      console.error('Error fetching ready items:', err);
+      setError('Failed to load ready items. Please refresh the page.');
+    } finally {
+      setLoadingReadyItems(false);
+    }
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -24,7 +51,16 @@ const CreateProduction = () => {
       setLoading(true);
       setError('');
       setSuccess('');
-      await produceReadyItem(formData);
+      
+      // Prepare payload with proper data types
+      const payload = {
+        readyItemId: formData.readyItemId ? Number(formData.readyItemId) : null,
+        quantityProduced: formData.quantity ? Number(formData.quantity) : null,
+        quality: formData.quality,
+        productionDate: formData.productionDate,
+      };
+      
+      await produceReadyItem(payload);
       setSuccess('Production record created successfully!');
       setTimeout(() => setFormData({ readyItemId: '', quantity: '', quality: '', productionDate: new Date().toISOString().split('T')[0] }), 2000);
     } catch (err) {
@@ -50,13 +86,54 @@ const CreateProduction = () => {
         <form onSubmit={handleSubmit}>
           <Grid container spacing={3}>
             <Grid item xs={12} md={6}>
-              <TextField fullWidth label="Ready Item ID" name="readyItemId" value={formData.readyItemId} onChange={handleChange} disabled={loading} type="number" required />
+              <FormControl fullWidth required error={!!error && !formData.readyItemId} disabled={loading || loadingReadyItems}>
+                <InputLabel id="ready-item-select-label">Ready Item</InputLabel>
+                <Select
+                  labelId="ready-item-select-label"
+                  id="ready-item-select"
+                  name="readyItemId"
+                  value={formData.readyItemId}
+                  label="Ready Item"
+                  onChange={handleChange}
+                >
+                  {loadingReadyItems ? (
+                    <MenuItem disabled>
+                      <CircularProgress size={20} sx={{ mr: 1 }} />
+                      Loading ready items...
+                    </MenuItem>
+                  ) : readyItems.length === 0 ? (
+                    <MenuItem disabled>No ready items available</MenuItem>
+                  ) : (
+                    readyItems.map((item) => (
+                      <MenuItem key={item.id} value={item.id}>
+                        {item.name}
+                      </MenuItem>
+                    ))
+                  )}
+                </Select>
+              </FormControl>
             </Grid>
             <Grid item xs={12} md={6}>
               <TextField fullWidth label="Quantity" name="quantity" value={formData.quantity} onChange={handleChange} disabled={loading} type="number" required />
             </Grid>
             <Grid item xs={12} md={6}>
-              <TextField fullWidth label="Quality" name="quality" value={formData.quality} onChange={handleChange} disabled={loading} />
+              <FormControl fullWidth required error={!!error && !formData.quality} disabled={loading}>
+                <InputLabel id="quality-select-label">Quality</InputLabel>
+                <Select
+                  labelId="quality-select-label"
+                  id="quality-select"
+                  name="quality"
+                  value={formData.quality}
+                  label="Quality"
+                  onChange={handleChange}
+                >
+                  {qualityOptions.map((quality) => (
+                    <MenuItem key={quality} value={quality}>
+                      {quality}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
             </Grid>
             <Grid item xs={12} md={6}>
               <TextField fullWidth label="Production Date" name="productionDate" value={formData.productionDate} onChange={handleChange} disabled={loading} type="date" InputLabelProps={{ shrink: true }} />

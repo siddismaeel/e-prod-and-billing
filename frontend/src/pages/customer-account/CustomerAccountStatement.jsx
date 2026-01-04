@@ -1,7 +1,8 @@
-import { useState } from 'react';
-import { Container, Typography, Paper, Box, TextField, Button, Grid, Alert, CircularProgress, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
+import { useState, useEffect } from 'react';
+import { Container, Typography, Paper, Box, TextField, Button, Grid, Alert, CircularProgress, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
 import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
 import { getAccountStatement, getPaymentHistory } from '../../services/customerAccountService';
+import { getCustomersForDropdown } from '../../services/customerService';
 
 const CustomerAccountStatement = () => {
   const [loading, setLoading] = useState(false);
@@ -12,14 +13,38 @@ const CustomerAccountStatement = () => {
   const [statement, setStatement] = useState(null);
   const [transactions, setTransactions] = useState([]);
 
+  // Customers dropdown data
+  const [customers, setCustomers] = useState([]);
+  const [loadingCustomers, setLoadingCustomers] = useState(true);
+
+  // Fetch customers on component mount
+  useEffect(() => {
+    fetchCustomers();
+  }, []);
+
+  // Fetch customers
+  const fetchCustomers = async () => {
+    try {
+      setLoadingCustomers(true);
+      const data = await getCustomersForDropdown();
+      setCustomers(data || []);
+    } catch (err) {
+      console.error('Error fetching customers:', err);
+      setError('Failed to load customers. Please refresh the page.');
+    } finally {
+      setLoadingCustomers(false);
+    }
+  };
+
   const fetchStatement = async () => {
     if (!customerId) return;
     try {
       setLoading(true);
       setError('');
-      const data = await getAccountStatement(customerId, startDate, endDate);
+      const id = Number(customerId);
+      const data = await getAccountStatement(id, startDate, endDate);
       setStatement(data);
-      const trans = await getPaymentHistory(customerId);
+      const trans = await getPaymentHistory(id);
       setTransactions(trans || []);
     } catch (err) {
       setError(err.response?.data?.message || err.message || 'Failed to fetch account statement');
@@ -45,7 +70,35 @@ const CustomerAccountStatement = () => {
       <Paper sx={{ p: 4 }}>
         <Grid container spacing={3}>
           <Grid item xs={12} md={4}>
-            <TextField fullWidth label="Customer ID" value={customerId} onChange={(e) => setCustomerId(e.target.value)} type="number" />
+            <FormControl fullWidth disabled={loadingCustomers}>
+              <InputLabel id="customer-select-label">Customer</InputLabel>
+              <Select
+                labelId="customer-select-label"
+                id="customer-select"
+                value={customerId}
+                label="Customer"
+                onChange={(e) => setCustomerId(e.target.value)}
+                displayEmpty
+              >
+                <MenuItem value="">
+                  <em>Select Customer</em>
+                </MenuItem>
+                {loadingCustomers ? (
+                  <MenuItem disabled>
+                    <CircularProgress size={20} sx={{ mr: 1 }} />
+                    Loading customers...
+                  </MenuItem>
+                ) : customers.length === 0 ? (
+                  <MenuItem disabled>No customers available</MenuItem>
+                ) : (
+                  customers.map((customer) => (
+                    <MenuItem key={customer.id} value={customer.id}>
+                      {customer.name}
+                    </MenuItem>
+                  ))
+                )}
+              </Select>
+            </FormControl>
           </Grid>
           <Grid item xs={12} md={3}>
             <TextField fullWidth label="Start Date" value={startDate} onChange={(e) => setStartDate(e.target.value)} type="date" InputLabelProps={{ shrink: true }} />

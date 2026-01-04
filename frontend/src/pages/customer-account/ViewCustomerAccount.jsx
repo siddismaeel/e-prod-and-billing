@@ -1,7 +1,8 @@
-import { useState } from 'react';
-import { Container, Typography, Paper, Box, TextField, Button, Grid, Alert, CircularProgress } from '@mui/material';
+import { useState, useEffect } from 'react';
+import { Container, Typography, Paper, Box, TextField, Button, Grid, Alert, CircularProgress, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import { getAccount, recalculateBalance } from '../../services/customerAccountService';
+import { getCustomersForDropdown } from '../../services/customerService';
 
 const ViewCustomerAccount = () => {
   const [loading, setLoading] = useState(false);
@@ -9,12 +10,36 @@ const ViewCustomerAccount = () => {
   const [customerId, setCustomerId] = useState('');
   const [account, setAccount] = useState(null);
 
+  // Customers dropdown data
+  const [customers, setCustomers] = useState([]);
+  const [loadingCustomers, setLoadingCustomers] = useState(true);
+
+  // Fetch customers on component mount
+  useEffect(() => {
+    fetchCustomers();
+  }, []);
+
+  // Fetch customers
+  const fetchCustomers = async () => {
+    try {
+      setLoadingCustomers(true);
+      const data = await getCustomersForDropdown();
+      setCustomers(data || []);
+    } catch (err) {
+      console.error('Error fetching customers:', err);
+      setError('Failed to load customers. Please refresh the page.');
+    } finally {
+      setLoadingCustomers(false);
+    }
+  };
+
   const fetchAccount = async () => {
     if (!customerId) return;
     try {
       setLoading(true);
       setError('');
-      const data = await getAccount(customerId);
+      const id = Number(customerId);
+      const data = await getAccount(id);
       setAccount(data);
     } catch (err) {
       setError(err.response?.data?.message || err.message || 'Failed to fetch customer account');
@@ -29,7 +54,8 @@ const ViewCustomerAccount = () => {
     try {
       setLoading(true);
       setError('');
-      const data = await recalculateBalance(customerId);
+      const id = Number(customerId);
+      const data = await recalculateBalance(id);
       setAccount(data);
     } catch (err) {
       setError(err.response?.data?.message || err.message || 'Failed to recalculate balance');
@@ -53,7 +79,35 @@ const ViewCustomerAccount = () => {
       <Paper sx={{ p: 4 }}>
         <Grid container spacing={3}>
           <Grid item xs={12} md={8}>
-            <TextField fullWidth label="Customer ID" value={customerId} onChange={(e) => setCustomerId(e.target.value)} type="number" />
+            <FormControl fullWidth disabled={loadingCustomers}>
+              <InputLabel id="customer-select-label">Customer</InputLabel>
+              <Select
+                labelId="customer-select-label"
+                id="customer-select"
+                value={customerId}
+                label="Customer"
+                onChange={(e) => setCustomerId(e.target.value)}
+                displayEmpty
+              >
+                <MenuItem value="">
+                  <em>Select Customer</em>
+                </MenuItem>
+                {loadingCustomers ? (
+                  <MenuItem disabled>
+                    <CircularProgress size={20} sx={{ mr: 1 }} />
+                    Loading customers...
+                  </MenuItem>
+                ) : customers.length === 0 ? (
+                  <MenuItem disabled>No customers available</MenuItem>
+                ) : (
+                  customers.map((customer) => (
+                    <MenuItem key={customer.id} value={customer.id}>
+                      {customer.name}
+                    </MenuItem>
+                  ))
+                )}
+              </Select>
+            </FormControl>
           </Grid>
           <Grid item xs={12} md={4}>
             <Button fullWidth variant="contained" onClick={fetchAccount} disabled={loading || !customerId} sx={{ height: '56px' }}>Get Account</Button>

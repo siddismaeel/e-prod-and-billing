@@ -9,6 +9,10 @@ import {
   Grid,
   Alert,
   CircularProgress,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from '@mui/material';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import AddIcon from '@mui/icons-material/Add';
@@ -20,6 +24,25 @@ const CreateReadyItem = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+
+  // Unit options for dropdown
+  const unitOptions = [
+    'kg',
+    'g',
+    'ton',
+    'liter',
+    'ml',
+    'piece',
+    'box',
+    'pack',
+    'meter',
+    'cm',
+    'm²',
+    'm³',
+    'bag',
+    'roll',
+    'sheet',
+  ];
 
   const [formData, setFormData] = useState({
     id: null,
@@ -129,7 +152,28 @@ const CreateReadyItem = () => {
               <TextField fullWidth label="Code" name="code" value={formData.code} onChange={handleChange} error={!!errors.code} helperText={errors.code} required disabled={loading} />
             </Grid>
             <Grid item xs={12} md={6}>
-              <TextField fullWidth label="Unit" name="unit" value={formData.unit} onChange={handleChange} error={!!errors.unit} helperText={errors.unit} required disabled={loading} placeholder="e.g., kg, liter, piece" />
+              <FormControl fullWidth required error={!!errors.unit} disabled={loading}>
+                <InputLabel id="unit-select-label">Unit</InputLabel>
+                <Select
+                  labelId="unit-select-label"
+                  id="unit-select"
+                  name="unit"
+                  value={formData.unit}
+                  label="Unit"
+                  onChange={handleChange}
+                >
+                  {unitOptions.map((unit) => (
+                    <MenuItem key={unit} value={unit}>
+                      {unit}
+                    </MenuItem>
+                  ))}
+                </Select>
+                {errors.unit && (
+                  <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 1.75 }}>
+                    {errors.unit}
+                  </Typography>
+                )}
+              </FormControl>
             </Grid>
             <Grid item xs={12}>
               <TextField fullWidth label="Description" name="description" value={formData.description} onChange={handleChange} disabled={loading} multiline rows={3} />

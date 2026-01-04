@@ -1,16 +1,40 @@
-import { useState } from 'react';
-import { Container, Typography, Paper, Box, TextField, Button, Grid, Alert, CircularProgress } from '@mui/material';
+import { useState, useEffect } from 'react';
+import { Container, Typography, Paper, Box, TextField, Button, Grid, Alert, CircularProgress, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
 import ScienceIcon from '@mui/icons-material/Science';
 import AddIcon from '@mui/icons-material/Add';
 import SaveIcon from '@mui/icons-material/Save';
 import ClearIcon from '@mui/icons-material/Clear';
 import { recordManualConsumption } from '../../services/materialConsumptionService';
+import { getAllRawMaterials } from '../../services/rawMaterialService';
 
 const CreateMaterialConsumption = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [formData, setFormData] = useState({ rawMaterialId: '', quantity: '', consumptionType: 'MANUAL', date: new Date().toISOString().split('T')[0], remarks: '' });
+
+  // Raw materials dropdown data
+  const [rawMaterials, setRawMaterials] = useState([]);
+  const [loadingRawMaterials, setLoadingRawMaterials] = useState(true);
+
+  // Fetch raw materials on component mount
+  useEffect(() => {
+    fetchRawMaterials();
+  }, []);
+
+  // Fetch raw materials
+  const fetchRawMaterials = async () => {
+    try {
+      setLoadingRawMaterials(true);
+      const data = await getAllRawMaterials();
+      setRawMaterials(data || []);
+    } catch (err) {
+      console.error('Error fetching raw materials:', err);
+      setError('Failed to load raw materials. Please refresh the page.');
+    } finally {
+      setLoadingRawMaterials(false);
+    }
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -24,7 +48,17 @@ const CreateMaterialConsumption = () => {
       setLoading(true);
       setError('');
       setSuccess('');
-      await recordManualConsumption(formData);
+      
+      // Prepare payload with proper data types
+      const payload = {
+        rawMaterialId: formData.rawMaterialId ? Number(formData.rawMaterialId) : null,
+        quantity: formData.quantity ? Number(formData.quantity) : null,
+        consumptionType: formData.consumptionType,
+        date: formData.date,
+        remarks: formData.remarks || null,
+      };
+      
+      await recordManualConsumption(payload);
       setSuccess('Material consumption recorded successfully!');
       setTimeout(() => setFormData({ rawMaterialId: '', quantity: '', consumptionType: 'MANUAL', date: new Date().toISOString().split('T')[0], remarks: '' }), 2000);
     } catch (err) {
@@ -50,7 +84,32 @@ const CreateMaterialConsumption = () => {
         <form onSubmit={handleSubmit}>
           <Grid container spacing={3}>
             <Grid item xs={12} md={6}>
-              <TextField fullWidth label="Raw Material ID" name="rawMaterialId" value={formData.rawMaterialId} onChange={handleChange} disabled={loading} type="number" required />
+              <FormControl fullWidth required error={!!error && !formData.rawMaterialId} disabled={loading || loadingRawMaterials}>
+                <InputLabel id="raw-material-select-label">Raw Material</InputLabel>
+                <Select
+                  labelId="raw-material-select-label"
+                  id="raw-material-select"
+                  name="rawMaterialId"
+                  value={formData.rawMaterialId}
+                  label="Raw Material"
+                  onChange={handleChange}
+                >
+                  {loadingRawMaterials ? (
+                    <MenuItem disabled>
+                      <CircularProgress size={20} sx={{ mr: 1 }} />
+                      Loading raw materials...
+                    </MenuItem>
+                  ) : rawMaterials.length === 0 ? (
+                    <MenuItem disabled>No raw materials available</MenuItem>
+                  ) : (
+                    rawMaterials.map((material) => (
+                      <MenuItem key={material.id} value={material.id}>
+                        {material.name}
+                      </MenuItem>
+                    ))
+                  )}
+                </Select>
+              </FormControl>
             </Grid>
             <Grid item xs={12} md={6}>
               <TextField fullWidth label="Quantity" name="quantity" value={formData.quantity} onChange={handleChange} disabled={loading} type="number" required />
