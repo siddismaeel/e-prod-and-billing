@@ -187,9 +187,12 @@ const CreateUser = () => {
     try {
       setLoadingDepartments(true);
       const data = await getDepartmentsByOrganizationId(organizationId);
-      setDepartments(data || []);
+      // Ensure data is always an array
+      const departmentsArray = Array.isArray(data) ? data : [];
+      setDepartments(departmentsArray);
     } catch (err) {
       console.error('Error fetching departments:', err);
+      setDepartments([]); // Set empty array on error
       // Don't show error for departments as it's optional
     } finally {
       setLoadingDepartments(false);
@@ -783,7 +786,7 @@ const CreateUser = () => {
                       <CircularProgress size={20} sx={{ mr: 1 }} />
                       Loading departments...
                     </MenuItem>
-                  ) : departments.length === 0 ? (
+                  ) : !Array.isArray(departments) || departments.length === 0 ? (
                     <MenuItem value="" disabled>
                       No departments available for this organization
                     </MenuItem>

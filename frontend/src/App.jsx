@@ -121,6 +121,14 @@ function App() {
                 }
               />
               <Route
+                path="/roles/create/:id"
+                element={
+                  <AppLayout>
+                    <CreateRole />
+                  </AppLayout>
+                }
+              />
+              <Route
                 path="/roles/list"
                 element={
                   <AppLayout>
@@ -130,6 +138,14 @@ function App() {
               />
               <Route
                 path="/rights/create"
+                element={
+                  <AppLayout>
+                    <CreateRight />
+                  </AppLayout>
+                }
+              />
+              <Route
+                path="/rights/create/:id"
                 element={
                   <AppLayout>
                     <CreateRight />

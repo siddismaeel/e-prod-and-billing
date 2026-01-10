@@ -11,8 +11,8 @@ import { apiService } from './api';
  */
 export const getAllRoles = async () => {
   try {
-    const response = await apiService.get('/org-setup/role/all');
-    // Handle response structure - check if data is nested
+    const response = await apiService.get('/org/role/all');
+    // Handle response structure: { data: [...], message: "string", status: "SUCCESS" | "FAILED" }
     if (response.data && response.data.data) {
       return response.data.data;
     }
@@ -45,14 +45,46 @@ export const getRolesByOrganizationId = async (organizationId) => {
 /**
  * Get role by ID
  * @param {number} roleId - Role ID
- * @returns {Promise} API response
+ * @returns {Promise} Role object
  */
 export const getRoleById = async (roleId) => {
   try {
-    const response = await apiService.get(`/org-setup/role/${roleId}`);
-    return response;
+    const response = await apiService.get(`/org/role/${roleId}`);
+    // Handle response structure: { data: {...}, message: "string", status: "SUCCESS" | "FAILED" }
+    return response.data?.data || response.data;
   } catch (error) {
     console.error('Error fetching role:', error);
+    throw error;
+  }
+};
+
+/**
+ * Create or update role
+ * @param {Object} roleData - Role data object (RoleRequest: { roleId?, roleName, priority, description })
+ * @returns {Promise} Role object from response
+ */
+export const saveRole = async (roleData) => {
+  try {
+    const response = await apiService.post('/org/role/save', roleData);
+    // Handle response structure: { data: {...}, message: "string", status: "SUCCESS" | "FAILED" }
+    return response.data?.data || response.data;
+  } catch (error) {
+    console.error('Error saving role:', error);
+    throw error;
+  }
+};
+
+/**
+ * Delete role
+ * @param {number} roleId - Role ID
+ * @returns {Promise} API response
+ */
+export const deleteRole = async (roleId) => {
+  try {
+    const response = await apiService.delete(`/org/role/delete/${roleId}`);
+    return response;
+  } catch (error) {
+    console.error('Error deleting role:', error);
     throw error;
   }
 };

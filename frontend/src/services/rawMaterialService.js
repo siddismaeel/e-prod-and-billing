@@ -11,7 +11,7 @@ import { apiService } from './api';
  */
 export const getAllRawMaterials = async () => {
   try {
-    const response = await apiService.get('/api/raw-materials');
+    const response = await apiService.get('/billing/api/raw-materials');
     return response.data?.data || response.data || [];
   } catch (error) {
     console.error('Error fetching raw materials:', error);
@@ -26,7 +26,7 @@ export const getAllRawMaterials = async () => {
  */
 export const getRawMaterialById = async (id) => {
   try {
-    const response = await apiService.get(`/api/raw-materials/${id}`);
+    const response = await apiService.get(`/billing/api/raw-materials/${id}`);
     return response.data?.data || response.data;
   } catch (error) {
     console.error('Error fetching raw material:', error);
@@ -41,12 +41,13 @@ export const getRawMaterialById = async (id) => {
  */
 export const upsertRawMaterial = async (rawMaterialData) => {
   try {
-    const response = await apiService.post('/api/raw-materials', rawMaterialData);
+    const response = await apiService.post('/billing/api/raw-materials', rawMaterialData);
     return response.data?.data || response.data;
   } catch (error) {
     console.error('Error upserting raw material:', error);
     throw error;
   }
 };
+
 
 

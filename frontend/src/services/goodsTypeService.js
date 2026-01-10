@@ -12,7 +12,7 @@ import { apiService } from './api';
 export const getAllGoodsTypes = async () => {
   try {
     // Try to fetch from API endpoint if it exists
-    const response = await apiService.get('/api/goods-types');
+    const response = await apiService.get('/billing/api/goods-types');
     return response.data?.data || response.data || [];
   } catch (error) {
     // If endpoint doesn't exist, return empty array
@@ -21,5 +21,6 @@ export const getAllGoodsTypes = async () => {
     return [];
   }
 };
+
 
 

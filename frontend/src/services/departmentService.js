@@ -26,7 +26,7 @@ export const createDepartment = async (departmentData) => {
     };
 
     console.log('Creating department with payload:', payload);
-    const response = await apiService.post('/org-setup/department/create', payload);
+    const response = await apiService.post('/org/department/create', payload);
     console.log('Department created successfully:', response.data);
     return response;
   } catch (error) {
@@ -42,12 +42,23 @@ export const createDepartment = async (departmentData) => {
  */
 export const getDepartmentsByOrganizationId = async (organizationId) => {
   try {
-    const response = await apiService.get(`/org-setup/department/all-by-organization-id/${organizationId}`);
-    // Handle response structure - check if data is nested
+    const response = await apiService.get(`/org/department/all-by-organization-id/${organizationId}`);
+    // Handle response structure: { data: { organizationId, departments: [...] }, message, status }
     if (response.data && response.data.data) {
-      return response.data.data;
+      // Check if data.data is an object with departments array
+      if (response.data.data.departments && Array.isArray(response.data.data.departments)) {
+        return response.data.data.departments;
+      }
+      // If data.data is already an array, return it
+      if (Array.isArray(response.data.data)) {
+        return response.data.data;
+      }
     }
-    return response.data || [];
+    // Fallback: check if response.data is an array
+    if (Array.isArray(response.data)) {
+      return response.data;
+    }
+    return [];
   } catch (error) {
     console.error('Error fetching departments by organization:', error);
     throw error;
@@ -61,7 +72,7 @@ export const getDepartmentsByOrganizationId = async (organizationId) => {
  */
 export const getDepartmentById = async (departmentId) => {
   try {
-    const response = await apiService.get(`/org-setup/department/${departmentId}`);
+    const response = await apiService.get(`/org/department/${departmentId}`);
     return response;
   } catch (error) {
     console.error('Error fetching department:', error);
@@ -75,7 +86,7 @@ export const getDepartmentById = async (departmentId) => {
  */
 export const getAllDepartments = async () => {
   try {
-    const response = await apiService.get('/org-setup/department/all');
+    const response = await apiService.get('/org/department/all');
     return response;
   } catch (error) {
     console.error('Error fetching departments:', error);

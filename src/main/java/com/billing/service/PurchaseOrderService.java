@@ -30,9 +30,8 @@ public class PurchaseOrderService {
     @Transactional
     public PurchaseOrderDTO upsertPurchaseOrder(PurchaseOrderDTO dto) {
         PurchaseOrder purchaseOrder;
-        boolean isUpdate = dto.getId() != null;
 
-        if (isUpdate) {
+        if (dto.getId() != null && dto.getId() > 0 && purchaseOrderRepository.existsById(dto.getId())) {
             // Update existing order
             purchaseOrder = purchaseOrderRepository.findById(dto.getId())
                     .orElseThrow(() -> new RuntimeException("Purchase order not found with id: " + dto.getId()));

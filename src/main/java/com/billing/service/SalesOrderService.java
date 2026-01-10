@@ -30,9 +30,8 @@ public class SalesOrderService {
     @Transactional
     public SalesOrderDTO upsertSalesOrder(SalesOrderDTO dto) {
         SalesOrder salesOrder;
-        boolean isUpdate = dto.getId() != null;
 
-        if (isUpdate) {
+        if (dto.getId() != null && dto.getId() > 0 && salesOrderRepository.existsById(dto.getId())) {
             // Update existing order
             salesOrder = salesOrderRepository.findById(dto.getId())
                     .orElseThrow(() -> new RuntimeException("Sales order not found with id: " + dto.getId()));
