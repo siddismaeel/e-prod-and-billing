@@ -162,7 +162,9 @@ public class SalesOrderService {
 
     private SalesItem convertToEntity(SalesItemDTO dto, SalesOrder salesOrder) {
         SalesItem item = new SalesItem();
-        if (dto.getId() != null) {
+        // Only set ID if it's a valid existing ID (> 0)
+        // For new items (id: 0 or null), let Hibernate generate the ID
+        if (dto.getId() != null && dto.getId() > 0) {
             item.setId(dto.getId());
         }
 
@@ -190,6 +192,9 @@ public class SalesOrderService {
         SalesOrderDTO dto = new SalesOrderDTO();
         dto.setId(order.getId());
         dto.setCustomerId(order.getCustomer().getId());
+        if (order.getCustomer() != null && order.getCustomer().getName() != null) {
+            dto.setCustomerName(order.getCustomer().getName());
+        }
         dto.setOrderDate(order.getOrderDate());
         dto.setTotalAmount(order.getTotalAmount());
         dto.setPaidAmount(order.getPaidAmount());

@@ -57,8 +57,48 @@ const ListPurchaseOrder = () => {
 
   const columns = [
     { field: 'id', headerName: 'ID', width: 100 },
-    { field: 'supplierId', headerName: 'Supplier ID', flex: 1, minWidth: 150 },
+    { 
+      field: 'supplierName', 
+      headerName: 'Supplier Name', 
+      flex: 1, 
+      minWidth: 200,
+      valueGetter: (value, row) => row.supplierName || '-',
+    },
     { field: 'orderDate', headerName: 'Order Date', flex: 1, minWidth: 150 },
+    { 
+      field: 'totalAmount', 
+      headerName: 'Total Amount', 
+      flex: 1, 
+      minWidth: 150,
+      type: 'number',
+      valueGetter: (value, row) => row.totalAmount || 0,
+      renderCell: (params) => params.value ? `₹${Number(params.value).toFixed(2)}` : '₹0.00',
+    },
+    { 
+      field: 'paidAmount', 
+      headerName: 'Paid Amount', 
+      flex: 1, 
+      minWidth: 150,
+      type: 'number',
+      valueGetter: (value, row) => row.paidAmount || 0,
+      renderCell: (params) => params.value ? `₹${Number(params.value).toFixed(2)}` : '₹0.00',
+    },
+    { 
+      field: 'balancePayment', 
+      headerName: 'Balance', 
+      flex: 1, 
+      minWidth: 150,
+      type: 'number',
+      valueGetter: (value, row) => row.balancePayment || 0,
+      renderCell: (params) => params.value ? `₹${Number(params.value).toFixed(2)}` : '₹0.00',
+    },
+    { 
+      field: 'paymentStatus', 
+      headerName: 'Payment Status', 
+      flex: 1, 
+      minWidth: 150,
+      valueGetter: (value, row) => row.paymentStatus || '-',
+    },
     {
       field: 'actions',
       headerName: 'Actions',
@@ -89,7 +129,57 @@ const ListPurchaseOrder = () => {
         <Box sx={{ mb: 3 }}>
           <TextField fullWidth label="Search Purchase Orders" placeholder="Search..." value={searchText} onChange={(e) => setSearchText(e.target.value)} InputProps={{ startAdornment: <InputAdornment position="start"><SearchIcon /></InputAdornment> }} />
         </Box>
-        {loading ? <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}><CircularProgress /></Box> : filteredPurchaseOrders.length === 0 ? <Box sx={{ p: 4, textAlign: 'center' }}><Typography variant="body1" color="text.secondary">No purchase orders found</Typography></Box> : <Box sx={{ height: 600, width: '100%' }}><DataGrid rows={filteredPurchaseOrders} columns={columns} getRowId={(row) => row.id} pageSize={10} rowsPerPageOptions={[10, 25, 50]} disableSelectionOnClick sx={{ '& .MuiDataGrid-cell:focus': { outline: 'none' } }} /></Box>}
+        {loading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+            <CircularProgress />
+          </Box>
+        ) : filteredPurchaseOrders.length === 0 ? (
+          <Box sx={{ p: 4, textAlign: 'center' }}>
+            <Typography variant="body1" color="text.secondary">
+              No purchase orders found
+            </Typography>
+          </Box>
+        ) : (
+          <Box sx={{ height: 600, width: '100%' }}>
+            <DataGrid
+              rows={filteredPurchaseOrders}
+              columns={columns}
+              getRowId={(row) => row.id}
+              pageSize={10}
+              rowsPerPageOptions={[10, 25, 50]}
+              disableRowSelectionOnClick
+              sx={{
+                '& .MuiDataGrid-cell:focus': {
+                  outline: 'none',
+                },
+                '& .MuiDataGrid-columnHeaders': {
+                  backgroundColor: 'primary.main',
+                  color: '#ffffff',
+                  fontWeight: 'bold',
+                },
+                '& .MuiDataGrid-columnHeaderTitle': {
+                  color: '#ffffff',
+                  fontWeight: 'bold',
+                },
+                '& .MuiDataGrid-columnHeader': {
+                  color: '#ffffff',
+                },
+                '& .MuiDataGrid-sortIcon': {
+                  color: '#ffffff',
+                },
+                '& .MuiDataGrid-menuIcon': {
+                  color: '#ffffff',
+                },
+                '& .MuiDataGrid-filterIcon': {
+                  color: '#ffffff',
+                },
+                '& .MuiDataGrid-columnHeader:focus': {
+                  outline: 'none',
+                },
+              }}
+            />
+          </Box>
+        )}
       </Paper>
     </Container>
   );

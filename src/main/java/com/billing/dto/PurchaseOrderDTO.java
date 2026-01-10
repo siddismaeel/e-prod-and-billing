@@ -21,6 +21,8 @@ public class PurchaseOrderDTO {
     @NotNull(message = "Customer ID is required")
     private Long customerId;
 
+    private String supplierName;
+
     @NotNull(message = "Order date is required")
     private LocalDate orderDate;
 

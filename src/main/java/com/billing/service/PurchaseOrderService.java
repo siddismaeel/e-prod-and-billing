@@ -152,7 +152,9 @@ public class PurchaseOrderService {
 
     private PurchaseItem convertToEntity(PurchaseItemDTO dto, PurchaseOrder purchaseOrder) {
         PurchaseItem item = new PurchaseItem();
-        if (dto.getId() != null) {
+        // Only set ID if it's a valid existing ID (> 0)
+        // For new items (id: 0 or null), let Hibernate generate the ID
+        if (dto.getId() != null && dto.getId() > 0) {
             item.setId(dto.getId());
         }
 
@@ -181,6 +183,9 @@ public class PurchaseOrderService {
         PurchaseOrderDTO dto = new PurchaseOrderDTO();
         dto.setId(order.getId());
         dto.setCustomerId(order.getCustomer().getId());
+        if (order.getCustomer() != null && order.getCustomer().getName() != null) {
+            dto.setSupplierName(order.getCustomer().getName());
+        }
         dto.setOrderDate(order.getOrderDate());
         dto.setTotalAmount(order.getTotalAmount());
         dto.setPaidAmount(order.getPaidAmount());
