@@ -101,7 +101,7 @@ public class PurchaseOrderService {
     }
 
     public PurchaseOrderDTO getPurchaseOrder(Long id) {
-        PurchaseOrder purchaseOrder = purchaseOrderRepository.findById(id)
+        PurchaseOrder purchaseOrder = purchaseOrderRepository.findByIdWithCustomer(id)
                 .orElseThrow(() -> new RuntimeException("Purchase order not found with id: " + id));
 
         List<PurchaseItem> purchaseItems = purchaseItemRepository.findByPurchaseOrderId(id);
@@ -109,7 +109,7 @@ public class PurchaseOrderService {
     }
 
     public List<PurchaseOrderDTO> getAllPurchaseOrders() {
-        return purchaseOrderRepository.findByDeletedAtIsNull().stream()
+        return purchaseOrderRepository.findAllWithCustomer().stream()
                 .map(order -> {
                     List<PurchaseItem> items = purchaseItemRepository.findByPurchaseOrderId(order.getId());
                     return convertToDTO(order, items);

@@ -104,7 +104,7 @@ public class SalesOrderService {
     }
 
     public SalesOrderDTO getSalesOrder(Long id) {
-        SalesOrder salesOrder = salesOrderRepository.findById(id)
+        SalesOrder salesOrder = salesOrderRepository.findByIdWithCustomer(id)
                 .orElseThrow(() -> new RuntimeException("Sales order not found with id: " + id));
 
         List<SalesItem> salesItems = salesItemRepository.findBySalesOrderId(id);
@@ -112,7 +112,7 @@ public class SalesOrderService {
     }
 
     public List<SalesOrderDTO> getAllSalesOrders() {
-        return salesOrderRepository.findByDeletedAtIsNull().stream()
+        return salesOrderRepository.findAllWithCustomer().stream()
                 .map(order -> {
                     List<SalesItem> items = salesItemRepository.findBySalesOrderId(order.getId());
                     return convertToDTO(order, items);
