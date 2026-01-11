@@ -172,6 +172,18 @@ public class PaymentTransactionService {
         throw new RuntimeException("Invalid order type: " + orderType);
     }
 
+    public List<PaymentTransactionDTO> getAllPayments() {
+        return paymentTransactionRepository.findAll().stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
+    public PaymentTransactionDTO getPaymentById(Long id) {
+        PaymentTransaction transaction = paymentTransactionRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Payment transaction not found with id: " + id));
+        return convertToDTO(transaction);
+    }
+
     private void reversePaymentImpact(PaymentTransaction transaction) {
         // Reverse order paid amounts
         if (transaction.getSalesOrder() != null) {
@@ -205,6 +217,7 @@ public class PaymentTransactionService {
         PaymentTransactionDTO dto = new PaymentTransactionDTO();
         dto.setId(transaction.getId());
         dto.setCustomerId(transaction.getCustomer().getId());
+        dto.setCustomerName(transaction.getCustomer() != null ? transaction.getCustomer().getName() : null);
         dto.setCustomerAccountId(transaction.getCustomerAccount() != null ? transaction.getCustomerAccount().getId() : null);
         dto.setTransactionType(transaction.getTransactionType());
         dto.setAmount(transaction.getAmount());

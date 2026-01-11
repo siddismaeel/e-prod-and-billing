@@ -388,7 +388,7 @@ function App() {
               />
               {/* Payment Routes */}
               <Route
-                path="/payments/create"
+                path="/payments/create/:id?"
                 element={
                   <AppLayout>
                     <CreatePayment />

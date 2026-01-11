@@ -1,16 +1,21 @@
 import { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { Container, Typography, Paper, Box, TextField, Button, Grid, Alert, CircularProgress, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
 import PaymentIcon from '@mui/icons-material/Payment';
 import AddIcon from '@mui/icons-material/Add';
 import SaveIcon from '@mui/icons-material/Save';
 import ClearIcon from '@mui/icons-material/Clear';
-import { recordPayment } from '../../services/paymentService';
+import { recordPayment, updatePayment, getPaymentById } from '../../services/paymentService';
 import { getCustomersForDropdown } from '../../services/customerService';
 import { getAllSalesOrders } from '../../services/salesOrderService';
 import { getAllPurchaseOrders } from '../../services/purchaseOrderService';
 
 const CreatePayment = () => {
+  const navigate = useNavigate();
+  const { id } = useParams(); // For edit mode
+  const isEditMode = !!id;
   const [loading, setLoading] = useState(false);
+  const [loadingPayment, setLoadingPayment] = useState(isEditMode);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [formData, setFormData] = useState({ customerId: '', orderId: '', orderType: 'SALES', amount: '', paymentDate: new Date().toISOString().split('T')[0], paymentMode: '', remarks: '' });
@@ -31,6 +36,13 @@ const CreatePayment = () => {
     fetchCustomers();
   }, []);
 
+  // Fetch payment data if in edit mode
+  useEffect(() => {
+    if (isEditMode && id) {
+      fetchPaymentData();
+    }
+  }, [id, isEditMode]);
+
   // Fetch orders when customer is selected
   useEffect(() => {
     if (formData.customerId) {
@@ -42,6 +54,31 @@ const CreatePayment = () => {
       setPurchaseOrders([]);
     }
   }, [formData.customerId]);
+
+  // Fetch payment data for edit mode
+  const fetchPaymentData = async () => {
+    try {
+      setLoadingPayment(true);
+      setError('');
+      const paymentData = await getPaymentById(Number(id));
+      
+      // Map backend fields to frontend form fields
+      setFormData({
+        customerId: paymentData.customerId?.toString() || '',
+        orderId: paymentData.salesOrderId ? paymentData.salesOrderId.toString() : 
+                 (paymentData.purchaseOrderId ? paymentData.purchaseOrderId.toString() : ''),
+        orderType: paymentData.transactionType === 'SALES_PAYMENT' ? 'SALES' : 'PURCHASE',
+        amount: paymentData.amount?.toString() || '',
+        paymentDate: paymentData.transactionDate || new Date().toISOString().split('T')[0],
+        paymentMode: paymentData.paymentMode || '',
+        remarks: paymentData.remarks || ''
+      });
+    } catch (err) {
+      setError(err.response?.data?.message || err.message || 'Failed to load payment data');
+    } finally {
+      setLoadingPayment(false);
+    }
+  };
 
   // Fetch customers
   const fetchCustomers = async () => {
@@ -128,11 +165,19 @@ const CreatePayment = () => {
         }
       }
       
-      await recordPayment(payload);
-      setSuccess('Payment recorded successfully!');
-      setTimeout(() => setFormData({ customerId: '', orderId: '', orderType: 'SALES', amount: '', paymentDate: new Date().toISOString().split('T')[0], paymentMode: '', remarks: '' }), 2000);
+      if (isEditMode) {
+        await updatePayment(Number(id), payload);
+        setSuccess('Payment updated successfully!');
+        setTimeout(() => {
+          navigate('/payments/list');
+        }, 2000);
+      } else {
+        await recordPayment(payload);
+        setSuccess('Payment recorded successfully!');
+        setTimeout(() => setFormData({ customerId: '', orderId: '', orderType: 'SALES', amount: '', paymentDate: new Date().toISOString().split('T')[0], paymentMode: '', remarks: '' }), 2000);
+      }
     } catch (err) {
-      setError(err.response?.data?.message || err.message || 'Failed to record payment');
+      setError(err.response?.data?.message || err.message || (isEditMode ? 'Failed to update payment' : 'Failed to record payment'));
     } finally {
       setLoading(false);
     }
@@ -144,13 +189,18 @@ const CreatePayment = () => {
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
           <PaymentIcon sx={{ fontSize: 40, mr: 2, color: 'primary.main' }} />
           <AddIcon sx={{ fontSize: 30, mr: 1, color: 'primary.main' }} />
-          <Typography variant="h4" component="h1">Record Payment</Typography>
+          <Typography variant="h4" component="h1">{isEditMode ? 'Edit Payment' : 'Record Payment'}</Typography>
         </Box>
         <Typography variant="body1" color="text.secondary">Record a new payment transaction</Typography>
       </Box>
       <Paper sx={{ p: 4, boxShadow: 3, borderRadius: 2 }}>
         {error && <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError('')}>{error}</Alert>}
         {success && <Alert severity="success" sx={{ mb: 3 }} onClose={() => setSuccess('')}>{success}</Alert>}
+        {loadingPayment && (
+          <Alert severity="info" sx={{ mb: 3 }}>
+            Loading payment data...
+          </Alert>
+        )}
         <form onSubmit={handleSubmit}>
           <Grid container spacing={3}>
             <Grid item xs={12} md={6}>

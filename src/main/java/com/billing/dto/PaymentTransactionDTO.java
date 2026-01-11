@@ -20,6 +20,8 @@ public class PaymentTransactionDTO {
     @NotNull(message = "Customer ID is required")
     private Long customerId;
 
+    private String customerName;
+
     private Long customerAccountId;
 
     @NotBlank(message = "Transaction type is required")

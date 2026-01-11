@@ -37,6 +37,18 @@ public class PaymentTransactionController {
         return ResponseEntity.noContent().build();
     }
 
+    @GetMapping
+    public ResponseEntity<List<PaymentTransactionDTO>> getAllPayments() {
+        List<PaymentTransactionDTO> payments = paymentTransactionService.getAllPayments();
+        return ResponseEntity.ok(payments);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<PaymentTransactionDTO> getPaymentById(@PathVariable Long id) {
+        PaymentTransactionDTO payment = paymentTransactionService.getPaymentById(id);
+        return ResponseEntity.ok(payment);
+    }
+
     @GetMapping("/customer/{customerId}")
     public ResponseEntity<List<PaymentTransactionDTO>> getPaymentsByCustomer(@PathVariable Long customerId) {
         List<PaymentTransactionDTO> payments = paymentTransactionService.getPaymentHistory(customerId);

@@ -67,6 +67,35 @@ export const getPaymentsByCustomer = async (customerId) => {
 };
 
 /**
+ * Get all payments
+ * @returns {Promise} Array of payments
+ */
+export const getAllPayments = async () => {
+  try {
+    const response = await apiService.get('/billing/api/payments');
+    return response.data?.data || response.data || [];
+  } catch (error) {
+    console.error('Error fetching all payments:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get payment by ID
+ * @param {number} id - Payment ID
+ * @returns {Promise} Payment object
+ */
+export const getPaymentById = async (id) => {
+  try {
+    const response = await apiService.get(`/billing/api/payments/${id}`);
+    return response.data?.data || response.data;
+  } catch (error) {
+    console.error('Error fetching payment by ID:', error);
+    throw error;
+  }
+};
+
+/**
  * Get payments by order
  * @param {number} orderId - Order ID
  * @param {string} orderType - Order type (e.g., 'SALES', 'PURCHASE')
