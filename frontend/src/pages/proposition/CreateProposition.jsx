@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
-import { Container, Typography, Paper, Box, TextField, Button, Grid, Alert, CircularProgress, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
+import { Container, Typography, Paper, Box, TextField, Button, Grid, Alert, CircularProgress, FormControl, InputLabel, Select, MenuItem, IconButton } from '@mui/material';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import AddIcon from '@mui/icons-material/Add';
 import SaveIcon from '@mui/icons-material/Save';
 import ClearIcon from '@mui/icons-material/Clear';
-import { upsertProposition } from '../../services/propositionService';
+import DeleteIcon from '@mui/icons-material/Delete';
+import { upsertPropositionsBatch } from '../../services/propositionService';
 import { getAllReadyItems } from '../../services/readyItemService';
 import { getAllRawMaterials } from '../../services/rawMaterialService';
 
@@ -12,7 +13,10 @@ const CreateProposition = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [formData, setFormData] = useState({ id: null, readyItemId: '', rawMaterialId: '', expectedPercentage: '' });
+  const [readyItemId, setReadyItemId] = useState('');
+  const [rawMaterialEntries, setRawMaterialEntries] = useState([
+    { rawMaterialId: '', expectedPercentage: '' }
+  ]);
 
   // Dropdown data
   const [readyItems, setReadyItems] = useState([]);
@@ -54,9 +58,20 @@ const CreateProposition = () => {
     }
   };
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+  const addRawMaterialRow = () => {
+    setRawMaterialEntries([...rawMaterialEntries, { rawMaterialId: '', expectedPercentage: '' }]);
+  };
+
+  const removeRawMaterialRow = (index) => {
+    if (rawMaterialEntries.length > 1) {
+      setRawMaterialEntries(rawMaterialEntries.filter((_, i) => i !== index));
+    }
+  };
+
+  const handleRawMaterialChange = (index, field, value) => {
+    const updated = [...rawMaterialEntries];
+    updated[index] = { ...updated[index], [field]: value };
+    setRawMaterialEntries(updated);
     if (success) setSuccess('');
   };
 
@@ -66,20 +81,46 @@ const CreateProposition = () => {
       setLoading(true);
       setError('');
       setSuccess('');
-      
-      // Prepare payload with proper data types
-      const payload = {
-        id: formData.id || null,
-        readyItemId: formData.readyItemId ? Number(formData.readyItemId) : null,
-        rawMaterialId: formData.rawMaterialId ? Number(formData.rawMaterialId) : null,
-        expectedPercentage: formData.expectedPercentage ? Number(formData.expectedPercentage) : null,
+
+      // Validation
+      if (!readyItemId) {
+        setError('Please select a Ready Item');
+        return;
+      }
+
+      if (rawMaterialEntries.length === 0) {
+        setError('Please add at least one raw material');
+        return;
+      }
+
+      // Validate all entries
+      for (let i = 0; i < rawMaterialEntries.length; i++) {
+        const entry = rawMaterialEntries[i];
+        if (!entry.rawMaterialId || !entry.expectedPercentage) {
+          setError(`Please fill all fields for Raw Material entry ${i + 1}`);
+          return;
+        }
+      }
+
+      // Prepare batch payload
+      const batchPayload = {
+        readyItemId: Number(readyItemId),
+        rawMaterialEntries: rawMaterialEntries.map(entry => ({
+          rawMaterialId: Number(entry.rawMaterialId),
+          expectedPercentage: Number(entry.expectedPercentage)
+        }))
       };
+
+      await upsertPropositionsBatch(batchPayload);
+      setSuccess(`Successfully saved ${rawMaterialEntries.length} proposition(s)!`);
       
-      await upsertProposition(payload);
-      setSuccess('Proposition saved successfully!');
-      setTimeout(() => setFormData({ id: null, readyItemId: '', rawMaterialId: '', expectedPercentage: '' }), 2000);
+      // Clear form after 2 seconds
+      setTimeout(() => {
+        setReadyItemId('');
+        setRawMaterialEntries([{ rawMaterialId: '', expectedPercentage: '' }]);
+      }, 2000);
     } catch (err) {
-      setError(err.response?.data?.message || err.message || 'Failed to save proposition');
+      setError(err.response?.data?.message || err.message || 'Failed to save propositions');
     } finally {
       setLoading(false);
     }
@@ -100,16 +141,16 @@ const CreateProposition = () => {
         {success && <Alert severity="success" sx={{ mb: 3 }} onClose={() => setSuccess('')}>{success}</Alert>}
         <form onSubmit={handleSubmit}>
           <Grid container spacing={3}>
-            <Grid item xs={12} md={6}>
-              <FormControl fullWidth required error={!!error && !formData.readyItemId} disabled={loading || loadingReadyItems}>
+            {/* Ready Item Selection - Once at the top */}
+            <Grid item xs={12}>
+              <FormControl fullWidth required error={!!error && !readyItemId} disabled={loading || loadingReadyItems}>
                 <InputLabel id="ready-item-select-label">Ready Item</InputLabel>
                 <Select
                   labelId="ready-item-select-label"
                   id="ready-item-select"
-                  name="readyItemId"
-                  value={formData.readyItemId}
+                  value={readyItemId}
                   label="Ready Item"
-                  onChange={handleChange}
+                  onChange={(e) => setReadyItemId(e.target.value)}
                 >
                   {loadingReadyItems ? (
                     <MenuItem disabled>
@@ -128,41 +169,100 @@ const CreateProposition = () => {
                 </Select>
               </FormControl>
             </Grid>
-            <Grid item xs={12} md={6}>
-              <FormControl fullWidth required error={!!error && !formData.rawMaterialId} disabled={loading || loadingRawMaterials}>
-                <InputLabel id="raw-material-select-label">Raw Material</InputLabel>
-                <Select
-                  labelId="raw-material-select-label"
-                  id="raw-material-select"
-                  name="rawMaterialId"
-                  value={formData.rawMaterialId}
-                  label="Raw Material"
-                  onChange={handleChange}
-                >
-                  {loadingRawMaterials ? (
-                    <MenuItem disabled>
-                      <CircularProgress size={20} sx={{ mr: 1 }} />
-                      Loading raw materials...
-                    </MenuItem>
-                  ) : rawMaterials.length === 0 ? (
-                    <MenuItem disabled>No raw materials available</MenuItem>
-                  ) : (
-                    rawMaterials.map((material) => (
-                      <MenuItem key={material.id} value={material.id}>
-                        {material.name}
-                      </MenuItem>
-                    ))
-                  )}
-                </Select>
-              </FormControl>
+
+            {/* Raw Materials Section */}
+            <Grid item xs={12}>
+              <Typography variant="h6" sx={{ mb: 2 }}>Raw Materials</Typography>
+              {rawMaterialEntries.map((entry, index) => (
+                <Box key={index} sx={{ mb: 2, p: 2, border: '1px solid', borderColor: 'divider', borderRadius: 1 }}>
+                  <Grid container spacing={2} alignItems="center">
+                    <Grid item xs={12} md={5}>
+                      <FormControl fullWidth required disabled={loading || loadingRawMaterials}>
+                        <InputLabel>Raw Material</InputLabel>
+                        <Select
+                          value={entry.rawMaterialId}
+                          label="Raw Material"
+                          onChange={(e) => handleRawMaterialChange(index, 'rawMaterialId', e.target.value)}
+                        >
+                          {loadingRawMaterials ? (
+                            <MenuItem disabled>
+                              <CircularProgress size={20} sx={{ mr: 1 }} />
+                              Loading raw materials...
+                            </MenuItem>
+                          ) : rawMaterials.length === 0 ? (
+                            <MenuItem disabled>No raw materials available</MenuItem>
+                          ) : (
+                            rawMaterials.map((material) => (
+                              <MenuItem key={material.id} value={material.id}>
+                                {material.name}
+                              </MenuItem>
+                            ))
+                          )}
+                        </Select>
+                      </FormControl>
+                    </Grid>
+                    <Grid item xs={12} md={5}>
+                      <TextField
+                        fullWidth
+                        label="Expected Percentage"
+                        value={entry.expectedPercentage}
+                        onChange={(e) => handleRawMaterialChange(index, 'expectedPercentage', e.target.value)}
+                        disabled={loading}
+                        type="number"
+                        required
+                      />
+                    </Grid>
+                    <Grid item xs={12} md={2}>
+                      {rawMaterialEntries.length > 1 && (
+                        <IconButton
+                          onClick={() => removeRawMaterialRow(index)}
+                          color="error"
+                          disabled={loading}
+                        >
+                          <DeleteIcon />
+                        </IconButton>
+                      )}
+                    </Grid>
+                  </Grid>
+                </Box>
+              ))}
+              
+              {/* Add Raw Material Button */}
+              <Button
+                variant="outlined"
+                startIcon={<AddIcon />}
+                onClick={addRawMaterialRow}
+                disabled={loading || !readyItemId}
+                sx={{ mb: 2 }}
+              >
+                Add Raw Material
+              </Button>
             </Grid>
-            <Grid item xs={12} md={6}>
-              <TextField fullWidth label="Expected Percentage" name="expectedPercentage" value={formData.expectedPercentage} onChange={handleChange} disabled={loading} type="number" required />
-            </Grid>
+
+            {/* Submit Buttons */}
             <Grid item xs={12}>
               <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
-                <Button variant="outlined" startIcon={<ClearIcon />} onClick={() => setFormData({ id: null, readyItemId: '', rawMaterialId: '', expectedPercentage: '' })} disabled={loading} size="large">Clear</Button>
-                <Button type="submit" variant="contained" startIcon={loading ? <CircularProgress size={20} /> : <SaveIcon />} disabled={loading} size="large">{loading ? 'Saving...' : 'Save'}</Button>
+                <Button
+                  variant="outlined"
+                  startIcon={<ClearIcon />}
+                  onClick={() => {
+                    setReadyItemId('');
+                    setRawMaterialEntries([{ rawMaterialId: '', expectedPercentage: '' }]);
+                  }}
+                  disabled={loading}
+                  size="large"
+                >
+                  Clear
+                </Button>
+                <Button
+                  type="submit"
+                  variant="contained"
+                  startIcon={loading ? <CircularProgress size={20} /> : <SaveIcon />}
+                  disabled={loading}
+                  size="large"
+                >
+                  {loading ? 'Saving...' : 'Save All'}
+                </Button>
               </Box>
             </Grid>
           </Grid>

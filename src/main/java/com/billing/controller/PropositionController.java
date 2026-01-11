@@ -1,6 +1,7 @@
 package com.billing.controller;
 
 import com.billing.dto.PropositionDTO;
+import com.billing.dto.PropositionBatchDTO;
 import com.billing.service.PropositionService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +25,12 @@ public class PropositionController {
         PropositionDTO saved = propositionService.upsertProposition(dto);
         HttpStatus status = isUpdate ? HttpStatus.OK : HttpStatus.CREATED;
         return ResponseEntity.status(status).body(saved);
+    }
+
+    @PostMapping("/batch")
+    public ResponseEntity<List<PropositionDTO>> upsertPropositionsBatch(@Valid @RequestBody PropositionBatchDTO batchDto) {
+        List<PropositionDTO> saved = propositionService.upsertPropositionsBatch(batchDto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(saved);
     }
 
     @GetMapping("/ready-item/{readyItemId}")

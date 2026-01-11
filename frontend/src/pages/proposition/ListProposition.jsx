@@ -81,9 +81,31 @@ const ListProposition = () => {
 
   const columns = [
     { field: 'id', headerName: 'ID', width: 100 },
-    { field: 'readyItemId', headerName: 'Ready Item ID', flex: 1, minWidth: 150 },
-    { field: 'rawMaterialId', headerName: 'Raw Material ID', flex: 1, minWidth: 150 },
-    { field: 'expectedPercentage', headerName: 'Expected Percentage', flex: 1, minWidth: 150 },
+    { 
+      field: 'readyItemName', 
+      headerName: 'Ready Item', 
+      flex: 1, 
+      minWidth: 150,
+      valueGetter: (value, row) => row.readyItemName || ''
+    },
+    { 
+      field: 'rawMaterialName', 
+      headerName: 'Raw Material', 
+      flex: 1, 
+      minWidth: 150,
+      valueGetter: (value, row) => row.rawMaterialName || ''
+    },
+    { 
+      field: 'expectedPercentage', 
+      headerName: 'Expected Percentage', 
+      flex: 1, 
+      minWidth: 150,
+      valueGetter: (value, row) => row.expectedPercentage || 0,
+      renderCell: (params) => {
+        const percentage = params.row.expectedPercentage || 0;
+        return `${parseFloat(percentage).toFixed(2)}%`;
+      }
+    },
   ];
 
   return (
@@ -130,7 +152,59 @@ const ListProposition = () => {
           </FormControl>
           <TextField fullWidth label="Search Propositions" placeholder="Search..." value={searchText} onChange={(e) => setSearchText(e.target.value)} InputProps={{ startAdornment: <InputAdornment position="start"><SearchIcon /></InputAdornment> }} />
         </Box>
-        {loading ? <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}><CircularProgress /></Box> : !readyItemId ? <Box sx={{ p: 4, textAlign: 'center' }}><Typography variant="body1" color="text.secondary">Please select a Ready Item to view propositions</Typography></Box> : filteredPropositions.length === 0 ? <Box sx={{ p: 4, textAlign: 'center' }}><Typography variant="body1" color="text.secondary">No propositions found</Typography></Box> : <Box sx={{ height: 600, width: '100%' }}><DataGrid rows={filteredPropositions} columns={columns} getRowId={(row) => row.id} pageSize={10} rowsPerPageOptions={[10, 25, 50]} disableSelectionOnClick sx={{ '& .MuiDataGrid-cell:focus': { outline: 'none' } }} /></Box>}
+        {loading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+            <CircularProgress />
+          </Box>
+        ) : !readyItemId ? (
+          <Box sx={{ p: 4, textAlign: 'center' }}>
+            <Typography variant="body1" color="text.secondary">Please select a Ready Item to view propositions</Typography>
+          </Box>
+        ) : filteredPropositions.length === 0 ? (
+          <Box sx={{ p: 4, textAlign: 'center' }}>
+            <Typography variant="body1" color="text.secondary">No propositions found</Typography>
+          </Box>
+        ) : (
+          <Box sx={{ height: 600, width: '100%' }}>
+            <DataGrid
+              rows={filteredPropositions}
+              columns={columns}
+              getRowId={(row) => row.id}
+              pageSize={10}
+              rowsPerPageOptions={[10, 25, 50]}
+              disableSelectionOnClick
+              sx={{
+                '& .MuiDataGrid-cell:focus': {
+                  outline: 'none',
+                },
+                '& .MuiDataGrid-columnHeaders': {
+                  backgroundColor: 'primary.main',
+                  color: '#ffffff',
+                  fontWeight: 'bold',
+                },
+                '& .MuiDataGrid-columnHeaderTitle': {
+                  color: '#ffffff',
+                  fontWeight: 'bold',
+                },
+                '& .MuiDataGrid-columnHeader': {
+                  color: '#ffffff',
+                },
+                '& .MuiDataGrid-sortIcon': {
+                  color: '#ffffff',
+                },
+                '& .MuiDataGrid-menuIcon': {
+                  color: '#ffffff',
+                },
+                '& .MuiDataGrid-filterIcon': {
+                  color: '#ffffff',
+                },
+                '& .MuiDataGrid-columnHeader:focus': {
+                  outline: 'none',
+                },
+              }}
+            />
+          </Box>
+        )}
       </Paper>
     </Container>
   );

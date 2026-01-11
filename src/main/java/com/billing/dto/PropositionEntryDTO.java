@@ -11,19 +11,10 @@ import java.math.BigDecimal;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class PropositionDTO {
-
-    private Long id;
-
-    @NotNull(message = "Ready item ID is required")
-    private Long readyItemId;
+public class PropositionEntryDTO {
 
     @NotNull(message = "Raw material ID is required")
     private Long rawMaterialId;
-
-    private String readyItemName;
-
-    private String rawMaterialName;
 
     @NotNull(message = "Expected percentage is required")
     @PositiveOrZero(message = "Expected percentage must be positive or zero")

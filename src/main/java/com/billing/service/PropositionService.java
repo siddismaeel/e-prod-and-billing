@@ -1,6 +1,8 @@
 package com.billing.service;
 
 import com.billing.dto.PropositionDTO;
+import com.billing.dto.PropositionBatchDTO;
+import com.billing.dto.PropositionEntryDTO;
 import com.billing.entity.Proposition;
 import com.billing.entity.RawMaterial;
 import com.billing.entity.ReadyItem;
@@ -14,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -46,6 +49,32 @@ public class PropositionService {
 
         proposition = propositionRepository.save(proposition);
         return convertToDTO(proposition);
+    }
+
+    @Transactional
+    public List<PropositionDTO> upsertPropositionsBatch(PropositionBatchDTO batchDto) {
+        ReadyItem readyItem = readyItemRepository.findById(batchDto.getReadyItemId())
+                .orElseThrow(() -> new RuntimeException("Ready item not found with id: " + batchDto.getReadyItemId()));
+
+        List<PropositionDTO> savedPropositions = new ArrayList<>();
+        
+        for (PropositionEntryDTO entry : batchDto.getRawMaterialEntries()) {
+            RawMaterial rawMaterial = rawMaterialRepository.findById(entry.getRawMaterialId())
+                    .orElseThrow(() -> new RuntimeException("Raw material not found with id: " + entry.getRawMaterialId()));
+
+            Proposition proposition = propositionRepository
+                    .findByReadyItemIdAndRawMaterialId(batchDto.getReadyItemId(), entry.getRawMaterialId())
+                    .orElse(new Proposition());
+
+            proposition.setReadyItem(readyItem);
+            proposition.setRawMaterial(rawMaterial);
+            proposition.setExpectedPercentage(entry.getExpectedPercentage());
+
+            proposition = propositionRepository.save(proposition);
+            savedPropositions.add(convertToDTO(proposition));
+        }
+        
+        return savedPropositions;
     }
 
     public List<PropositionDTO> getPropositionsByReadyItem(Long readyItemId) {
@@ -175,7 +204,9 @@ public class PropositionService {
         PropositionDTO dto = new PropositionDTO();
         dto.setId(proposition.getId());
         dto.setReadyItemId(proposition.getReadyItem().getId());
+        dto.setReadyItemName(proposition.getReadyItem() != null ? proposition.getReadyItem().getName() : null);
         dto.setRawMaterialId(proposition.getRawMaterial().getId());
+        dto.setRawMaterialName(proposition.getRawMaterial() != null ? proposition.getRawMaterial().getName() : null);
         dto.setExpectedPercentage(proposition.getExpectedPercentage());
         return dto;
     }
