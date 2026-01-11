@@ -12,7 +12,7 @@ import { apiService } from './api';
  */
 export const getCurrentStock = async (id) => {
   try {
-    const response = await apiService.get(`/api/ready-items/${id}/stock/current`);
+    const response = await apiService.get(`/billing/api/ready-items/${id}/stock/current`);
     return response.data?.data || response.data || 0;
   } catch (error) {
     console.error('Error fetching current stock:', error);
@@ -28,7 +28,7 @@ export const getCurrentStock = async (id) => {
  */
 export const getStockByDate = async (id, date) => {
   try {
-    const response = await apiService.get(`/api/ready-items/${id}/stock`, {
+    const response = await apiService.get(`/billing/api/ready-items/${id}/stock`, {
       params: { date }
     });
     return response.data?.data || response.data;
@@ -47,12 +47,26 @@ export const getStockByDate = async (id, date) => {
  */
 export const getStockHistory = async (id, startDate, endDate) => {
   try {
-    const response = await apiService.get(`/api/ready-items/${id}/stock/history`, {
+    const response = await apiService.get(`/billing/api/ready-items/${id}/stock/history`, {
       params: { startDate, endDate }
     });
     return response.data?.data || response.data || [];
   } catch (error) {
     console.error('Error fetching stock history:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get all current stocks for all ready items
+ * @returns {Promise} Array of stock summaries
+ */
+export const getAllCurrentStocks = async () => {
+  try {
+    const response = await apiService.get('/billing/api/ready-items/stock/all-current');
+    return response.data?.data || response.data || [];
+  } catch (error) {
+    console.error('Error fetching all current stocks:', error);
     throw error;
   }
 };

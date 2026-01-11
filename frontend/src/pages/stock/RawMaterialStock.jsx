@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Container, Typography, Paper, Box, TextField, Button, Grid, Alert, CircularProgress, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
+import { DataGrid } from '@mui/x-data-grid';
 import InventoryIcon from '@mui/icons-material/Inventory';
 import SearchIcon from '@mui/icons-material/Search';
-import { getCurrentStock, getStockHistory, adjustStock } from '../../services/rawMaterialStockService';
+import { getCurrentStock, getStockHistory, adjustStock, getAllCurrentStocks } from '../../services/rawMaterialStockService';
 import { getAllRawMaterials } from '../../services/rawMaterialService';
 
 const RawMaterialStock = () => {
@@ -19,10 +20,15 @@ const RawMaterialStock = () => {
   // Dropdown data
   const [rawMaterials, setRawMaterials] = useState([]);
   const [loadingRawMaterials, setLoadingRawMaterials] = useState(true);
+  
+  // All stocks data
+  const [allStocks, setAllStocks] = useState([]);
+  const [loadingAllStocks, setLoadingAllStocks] = useState(true);
 
-  // Fetch raw materials on component mount
+  // Fetch raw materials and all stocks on component mount
   useEffect(() => {
     fetchRawMaterials();
+    fetchAllStocks();
   }, []);
 
   const fetchRawMaterials = async () => {
@@ -35,6 +41,19 @@ const RawMaterialStock = () => {
       setError('Failed to load raw materials. Please refresh the page.');
     } finally {
       setLoadingRawMaterials(false);
+    }
+  };
+
+  const fetchAllStocks = async () => {
+    try {
+      setLoadingAllStocks(true);
+      const data = await getAllCurrentStocks();
+      setAllStocks(data || []);
+    } catch (err) {
+      console.error('Error fetching all stocks:', err);
+      setError('Failed to load all stocks. Please refresh the page.');
+    } finally {
+      setLoadingAllStocks(false);
     }
   };
 
@@ -80,6 +99,7 @@ const RawMaterialStock = () => {
       setSuccess('Stock adjusted successfully!');
       fetchCurrentStock();
       fetchStockHistory();
+      fetchAllStocks(); // Refresh all stocks after adjustment
       setAdjustmentData({ quantity: '', remarks: '' });
     } catch (err) {
       setError(err.response?.data?.message || err.message || 'Failed to adjust stock');
@@ -101,7 +121,115 @@ const RawMaterialStock = () => {
       {error && <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError('')}>{error}</Alert>}
       {success && <Alert severity="success" sx={{ mb: 3 }} onClose={() => setSuccess('')}>{success}</Alert>}
 
+      {/* All Stocks Section */}
+      <Paper sx={{ p: 4, mb: 4 }}>
+        <Typography variant="h5" sx={{ mb: 3, color: 'primary.main' }}>
+          All Raw Material Stocks
+        </Typography>
+        
+        {loadingAllStocks ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+            <CircularProgress />
+          </Box>
+        ) : allStocks.length === 0 ? (
+          <Box sx={{ p: 4, textAlign: 'center' }}>
+            <Typography variant="body1" color="text.secondary">
+              No stock data available
+            </Typography>
+          </Box>
+        ) : (
+          <>
+            <Box sx={{ height: 400, width: '100%', mb: 3 }}>
+              <DataGrid
+                rows={allStocks}
+                columns={[
+                  {
+                    field: 'rawMaterialId',
+                    headerName: 'Raw Material ID',
+                    flex: 1,
+                    minWidth: 150,
+                    sortable: true,
+                  },
+                  {
+                    field: 'rawMaterialName',
+                    headerName: 'Raw Material Name',
+                    flex: 1,
+                    minWidth: 200,
+                    sortable: true,
+                  },
+                  {
+                    field: 'currentStock',
+                    headerName: 'Current Stock',
+                    flex: 1,
+                    minWidth: 200,
+                    sortable: true,
+                    valueGetter: (value, row) => {
+                      const stock = Number(row.currentStock || 0);
+                      return stock;
+                    },
+                    renderCell: (params) => {
+                      const stock = Number(params.row.currentStock || 0).toFixed(2);
+                      const unit = params.row.unit || '';
+                      return `${stock} ${unit}`.trim();
+                    },
+                  },
+                ]}
+                getRowId={(row) => row.rawMaterialId}
+                pageSize={10}
+                rowsPerPageOptions={[10, 25, 50]}
+                disableSelectionOnClick
+                sx={{
+                  '& .MuiDataGrid-cell:focus': {
+                    outline: 'none',
+                  },
+                  '& .MuiDataGrid-columnHeaders': {
+                    backgroundColor: 'primary.main',
+                    color: '#ffffff',
+                    fontWeight: 'bold',
+                  },
+                  '& .MuiDataGrid-columnHeaderTitle': {
+                    color: '#ffffff',
+                    fontWeight: 'bold',
+                  },
+                  '& .MuiDataGrid-columnHeader': {
+                    color: '#ffffff',
+                  },
+                  '& .MuiDataGrid-sortIcon': {
+                    color: '#ffffff',
+                  },
+                  '& .MuiDataGrid-menuIcon': {
+                    color: '#ffffff',
+                  },
+                  '& .MuiDataGrid-filterIcon': {
+                    color: '#ffffff',
+                  },
+                  '& .MuiDataGrid-columnHeader:focus': {
+                    outline: 'none',
+                  },
+                }}
+              />
+            </Box>
+            
+            {/* Total Summary */}
+            {allStocks.length > 0 && (
+              <Box sx={{ mt: 2, p: 2, bgcolor: 'primary.light', color: 'primary.contrastText', borderRadius: 1 }}>
+                <Typography variant="h6">
+                  Total Stock: {allStocks.reduce((sum, stock) => sum + Number(stock.currentStock || 0), 0).toFixed(2)}
+                </Typography>
+                <Typography variant="body2" sx={{ mt: 0.5, opacity: 0.9 }}>
+                  Total Quantity of All Materials: {allStocks.reduce((sum, stock) => sum + Number(stock.currentStock || 0), 0).toFixed(2)}
+                </Typography>
+              </Box>
+            )}
+          </>
+        )}
+      </Paper>
+
+      {/* Single Material View Section */}
       <Paper sx={{ p: 4 }}>
+        <Typography variant="h5" sx={{ mb: 3, color: 'primary.main' }}>
+          View/Adjust Stock for Specific Material
+        </Typography>
         <Grid container spacing={3}>
           <Grid item xs={12} md={6}>
             <FormControl fullWidth disabled={loadingRawMaterials}>

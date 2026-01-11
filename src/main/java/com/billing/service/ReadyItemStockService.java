@@ -1,6 +1,7 @@
 package com.billing.service;
 
 import com.billing.dto.ReadyItemStockDTO;
+import com.billing.dto.ReadyItemStockSummaryDTO;
 import com.billing.entity.ReadyItem;
 import com.billing.entity.ReadyItemStock;
 import com.billing.repository.ReadyItemRepository;
@@ -82,6 +83,23 @@ public class ReadyItemStockService {
     public List<ReadyItemStockDTO> getStockHistory(Long readyItemId, LocalDate startDate, LocalDate endDate) {
         return stockRepository.findByReadyItemIdAndStockDateBetween(readyItemId, startDate, endDate).stream()
                 .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
+    public List<ReadyItemStockSummaryDTO> getAllCurrentStocks() {
+        List<ReadyItem> readyItems = readyItemRepository.findAll().stream()
+                .filter(ri -> ri.getDeleted() == null || !ri.getDeleted())
+                .collect(Collectors.toList());
+        
+        return readyItems.stream()
+                .map(ri -> {
+                    ReadyItemStockSummaryDTO summary = new ReadyItemStockSummaryDTO();
+                    summary.setReadyItemId(ri.getId());
+                    summary.setReadyItemName(ri.getName());
+                    summary.setCurrentStock(getCurrentStock(ri.getId())); // Gets total stock across all qualities
+                    summary.setUnit(ri.getUnit());
+                    return summary;
+                })
                 .collect(Collectors.toList());
     }
 

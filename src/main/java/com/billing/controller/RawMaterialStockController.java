@@ -1,6 +1,7 @@
 package com.billing.controller;
 
 import com.billing.dto.RawMaterialStockDTO;
+import com.billing.dto.RawMaterialStockSummaryDTO;
 import com.billing.dto.StockAdjustmentDTO;
 import com.billing.service.RawMaterialStockService;
 import jakarta.validation.Valid;
@@ -44,6 +45,11 @@ public class RawMaterialStockController {
             @PathVariable Long id,
             @Valid @RequestBody StockAdjustmentDTO adjustment) {
         return ResponseEntity.ok(stockService.adjustStock(id, adjustment));
+    }
+
+    @GetMapping("/stock/all-current")
+    public ResponseEntity<List<RawMaterialStockSummaryDTO>> getAllCurrentStocks() {
+        return ResponseEntity.ok(stockService.getAllCurrentStocks());
     }
 }
 

@@ -11,7 +11,7 @@ import { apiService } from './api';
  */
 export const getAllReadyItems = async () => {
   try {
-    const response = await apiService.get('/api/ready-items');
+    const response = await apiService.get('/billing/api/ready-items');
     return response.data?.data || response.data || [];
   } catch (error) {
     console.error('Error fetching ready items:', error);
@@ -26,7 +26,7 @@ export const getAllReadyItems = async () => {
  */
 export const getReadyItemById = async (id) => {
   try {
-    const response = await apiService.get(`/api/ready-items/${id}`);
+    const response = await apiService.get(`/billing/api/ready-items/${id}`);
     return response.data?.data || response.data;
   } catch (error) {
     console.error('Error fetching ready item:', error);
@@ -41,7 +41,7 @@ export const getReadyItemById = async (id) => {
  */
 export const upsertReadyItem = async (readyItemData) => {
   try {
-    const response = await apiService.post('/api/ready-items', readyItemData);
+    const response = await apiService.post('/billing/api/ready-items', readyItemData);
     return response.data?.data || response.data;
   } catch (error) {
     console.error('Error upserting ready item:', error);

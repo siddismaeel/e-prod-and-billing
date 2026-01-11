@@ -1,6 +1,7 @@
 package com.billing.controller;
 
 import com.billing.dto.ReadyItemStockDTO;
+import com.billing.dto.ReadyItemStockSummaryDTO;
 import com.billing.service.ReadyItemStockService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -35,6 +36,11 @@ public class ReadyItemStockController {
             @RequestParam LocalDate startDate,
             @RequestParam LocalDate endDate) {
         return ResponseEntity.ok(stockService.getStockHistory(id, startDate, endDate));
+    }
+
+    @GetMapping("/stock/all-current")
+    public ResponseEntity<List<ReadyItemStockSummaryDTO>> getAllCurrentStocks() {
+        return ResponseEntity.ok(stockService.getAllCurrentStocks());
     }
 }
 

@@ -1,6 +1,7 @@
 package com.billing.service;
 
 import com.billing.dto.RawMaterialStockDTO;
+import com.billing.dto.RawMaterialStockSummaryDTO;
 import com.billing.dto.StockAdjustmentDTO;
 import com.billing.entity.RawMaterial;
 import com.billing.entity.RawMaterialStock;
@@ -58,6 +59,23 @@ public class RawMaterialStockService {
     public List<RawMaterialStockDTO> getStockHistory(Long rawMaterialId, LocalDate startDate, LocalDate endDate) {
         return stockRepository.findByRawMaterialIdAndStockDateBetween(rawMaterialId, startDate, endDate).stream()
                 .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
+    public List<RawMaterialStockSummaryDTO> getAllCurrentStocks() {
+        List<RawMaterial> rawMaterials = rawMaterialRepository.findAll().stream()
+                .filter(rm -> rm.getDeleted() == null || !rm.getDeleted())
+                .collect(Collectors.toList());
+        
+        return rawMaterials.stream()
+                .map(rm -> {
+                    RawMaterialStockSummaryDTO summary = new RawMaterialStockSummaryDTO();
+                    summary.setRawMaterialId(rm.getId());
+                    summary.setRawMaterialName(rm.getName());
+                    summary.setCurrentStock(getCurrentStock(rm.getId()));
+                    summary.setUnit(rm.getUnit());
+                    return summary;
+                })
                 .collect(Collectors.toList());
     }
 

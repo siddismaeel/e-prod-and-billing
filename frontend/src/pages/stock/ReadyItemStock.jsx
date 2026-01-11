@@ -1,7 +1,9 @@
-import { useState } from 'react';
-import { Container, Typography, Paper, Box, TextField, Button, Grid, Alert, CircularProgress, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
+import { useState, useEffect } from 'react';
+import { Container, Typography, Paper, Box, TextField, Button, Grid, Alert, CircularProgress, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
+import { DataGrid } from '@mui/x-data-grid';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
-import { getCurrentStock, getStockHistory } from '../../services/readyItemStockService';
+import { getCurrentStock, getStockHistory, getAllCurrentStocks } from '../../services/readyItemStockService';
+import { getAllReadyItems } from '../../services/readyItemService';
 
 const ReadyItemStock = () => {
   const [loading, setLoading] = useState(false);
@@ -11,13 +13,53 @@ const ReadyItemStock = () => {
   const [stockHistory, setStockHistory] = useState([]);
   const [startDate, setStartDate] = useState(new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]);
   const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
+  
+  // Dropdown data
+  const [readyItems, setReadyItems] = useState([]);
+  const [loadingReadyItems, setLoadingReadyItems] = useState(true);
+  
+  // All stocks data
+  const [allStocks, setAllStocks] = useState([]);
+  const [loadingAllStocks, setLoadingAllStocks] = useState(true);
+
+  // Fetch ready items and all stocks on component mount
+  useEffect(() => {
+    fetchReadyItems();
+    fetchAllStocks();
+  }, []);
+
+  const fetchReadyItems = async () => {
+    try {
+      setLoadingReadyItems(true);
+      const data = await getAllReadyItems();
+      setReadyItems(data || []);
+    } catch (err) {
+      console.error('Error fetching ready items:', err);
+      setError('Failed to load ready items. Please refresh the page.');
+    } finally {
+      setLoadingReadyItems(false);
+    }
+  };
+
+  const fetchAllStocks = async () => {
+    try {
+      setLoadingAllStocks(true);
+      const data = await getAllCurrentStocks();
+      setAllStocks(data || []);
+    } catch (err) {
+      console.error('Error fetching all stocks:', err);
+      setError('Failed to load all stocks. Please refresh the page.');
+    } finally {
+      setLoadingAllStocks(false);
+    }
+  };
 
   const fetchCurrentStock = async () => {
     if (!readyItemId) return;
     try {
       setLoading(true);
       setError('');
-      const stock = await getCurrentStock(readyItemId);
+      const stock = await getCurrentStock(Number(readyItemId));
       setCurrentStock(stock);
     } catch (err) {
       setError(err.response?.data?.message || err.message || 'Failed to fetch current stock');
@@ -31,7 +73,7 @@ const ReadyItemStock = () => {
     try {
       setLoading(true);
       setError('');
-      const history = await getStockHistory(readyItemId, startDate, endDate);
+      const history = await getStockHistory(Number(readyItemId), startDate, endDate);
       setStockHistory(history || []);
     } catch (err) {
       setError(err.response?.data?.message || err.message || 'Failed to fetch stock history');
@@ -52,10 +94,146 @@ const ReadyItemStock = () => {
 
       {error && <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError('')}>{error}</Alert>}
 
+      {/* All Stocks Section */}
+      <Paper sx={{ p: 4, mb: 4 }}>
+        <Typography variant="h5" sx={{ mb: 3, color: 'primary.main' }}>
+          All Ready Item Stocks
+        </Typography>
+        
+        {loadingAllStocks ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+            <CircularProgress />
+          </Box>
+        ) : allStocks.length === 0 ? (
+          <Box sx={{ p: 4, textAlign: 'center' }}>
+            <Typography variant="body1" color="text.secondary">
+              No stock data available
+            </Typography>
+          </Box>
+        ) : (
+          <>
+            <Box sx={{ height: 400, width: '100%', mb: 3 }}>
+              <DataGrid
+                rows={allStocks}
+                columns={[
+                  {
+                    field: 'readyItemId',
+                    headerName: 'Ready Item ID',
+                    flex: 1,
+                    minWidth: 150,
+                    sortable: true,
+                  },
+                  {
+                    field: 'readyItemName',
+                    headerName: 'Ready Item Name',
+                    flex: 1,
+                    minWidth: 200,
+                    sortable: true,
+                  },
+                  {
+                    field: 'currentStock',
+                    headerName: 'Current Stock',
+                    flex: 1,
+                    minWidth: 200,
+                    sortable: true,
+                    valueGetter: (value, row) => {
+                      const stock = Number(row.currentStock || 0);
+                      return stock;
+                    },
+                    renderCell: (params) => {
+                      const stock = Number(params.row.currentStock || 0).toFixed(2);
+                      const unit = params.row.unit || '';
+                      return `${stock} ${unit}`.trim();
+                    },
+                  },
+                ]}
+                getRowId={(row) => row.readyItemId}
+                pageSize={10}
+                rowsPerPageOptions={[10, 25, 50]}
+                disableSelectionOnClick
+                sx={{
+                  '& .MuiDataGrid-cell:focus': {
+                    outline: 'none',
+                  },
+                  '& .MuiDataGrid-columnHeaders': {
+                    backgroundColor: 'primary.main',
+                    color: '#ffffff',
+                    fontWeight: 'bold',
+                  },
+                  '& .MuiDataGrid-columnHeaderTitle': {
+                    color: '#ffffff',
+                    fontWeight: 'bold',
+                  },
+                  '& .MuiDataGrid-columnHeader': {
+                    color: '#ffffff',
+                  },
+                  '& .MuiDataGrid-sortIcon': {
+                    color: '#ffffff',
+                  },
+                  '& .MuiDataGrid-menuIcon': {
+                    color: '#ffffff',
+                  },
+                  '& .MuiDataGrid-filterIcon': {
+                    color: '#ffffff',
+                  },
+                  '& .MuiDataGrid-columnHeader:focus': {
+                    outline: 'none',
+                  },
+                }}
+              />
+            </Box>
+            
+            {/* Total Summary */}
+            {allStocks.length > 0 && (
+              <Box sx={{ mt: 2, p: 2, bgcolor: 'primary.light', color: 'primary.contrastText', borderRadius: 1 }}>
+                <Typography variant="h6">
+                  Total Stock: {allStocks.reduce((sum, stock) => sum + Number(stock.currentStock || 0), 0).toFixed(2)}
+                </Typography>
+                <Typography variant="body2" sx={{ mt: 0.5, opacity: 0.9 }}>
+                  Total Quantity of All Items: {allStocks.reduce((sum, stock) => sum + Number(stock.currentStock || 0), 0).toFixed(2)}
+                </Typography>
+              </Box>
+            )}
+          </>
+        )}
+      </Paper>
+
+      {/* Single Item View Section */}
       <Paper sx={{ p: 4 }}>
+        <Typography variant="h5" sx={{ mb: 3, color: 'primary.main' }}>
+          View Stock for Specific Item
+        </Typography>
         <Grid container spacing={3}>
           <Grid item xs={12} md={6}>
-            <TextField fullWidth label="Ready Item ID" value={readyItemId} onChange={(e) => setReadyItemId(e.target.value)} type="number" />
+            <FormControl fullWidth disabled={loadingReadyItems}>
+              <InputLabel id="ready-item-select-label">Ready Item</InputLabel>
+              <Select
+                labelId="ready-item-select-label"
+                id="ready-item-select"
+                value={readyItemId}
+                label="Ready Item"
+                onChange={(e) => setReadyItemId(e.target.value)}
+                displayEmpty
+              >
+                <MenuItem value="">
+                  <em>Select Ready Item</em>
+                </MenuItem>
+                {loadingReadyItems ? (
+                  <MenuItem disabled>
+                    <CircularProgress size={20} sx={{ mr: 1 }} />
+                    Loading ready items...
+                  </MenuItem>
+                ) : readyItems.length === 0 ? (
+                  <MenuItem disabled>No ready items available</MenuItem>
+                ) : (
+                  readyItems.map((item) => (
+                    <MenuItem key={item.id} value={item.id}>
+                      {item.name || `Ready Item ${item.id}`}
+                    </MenuItem>
+                  ))
+                )}
+              </Select>
+            </FormControl>
           </Grid>
           <Grid item xs={12} md={3}>
             <Button fullWidth variant="contained" onClick={fetchCurrentStock} disabled={loading || !readyItemId} sx={{ height: '56px' }}>Get Current Stock</Button>

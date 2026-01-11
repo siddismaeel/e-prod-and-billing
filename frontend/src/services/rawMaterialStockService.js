@@ -73,5 +73,19 @@ export const adjustStock = async (id, adjustmentData) => {
   }
 };
 
+/**
+ * Get all current stocks for all raw materials
+ * @returns {Promise} Array of stock summaries
+ */
+export const getAllCurrentStocks = async () => {
+  try {
+    const response = await apiService.get('/billing/api/raw-materials/stock/all-current');
+    return response.data?.data || response.data || [];
+  } catch (error) {
+    console.error('Error fetching all current stocks:', error);
+    throw error;
+  }
+};
+
 
 
