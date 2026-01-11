@@ -20,6 +20,9 @@ public class AccountStatementDTO {
     private BigDecimal openingBalance;
     private BigDecimal closingBalance;
     
+    private BigDecimal totalCredit;  // Total credit (receivables + payments received)
+    private BigDecimal totalDebit;   // Total debit (payables + payments made)
+    
     // Summary
     private BigDecimal totalSales;
     private BigDecimal totalPurchases;

@@ -12,7 +12,7 @@ import { apiService } from './api';
  */
 export const getCurrentStock = async (id) => {
   try {
-    const response = await apiService.get(`/api/raw-materials/${id}/stock/current`);
+    const response = await apiService.get(`/billing/api/raw-materials/${id}/stock/current`);
     return response.data?.data || response.data || 0;
   } catch (error) {
     console.error('Error fetching current stock:', error);
@@ -28,7 +28,7 @@ export const getCurrentStock = async (id) => {
  */
 export const getStockByDate = async (id, date) => {
   try {
-    const response = await apiService.get(`/api/raw-materials/${id}/stock`, {
+    const response = await apiService.get(`/billing/api/raw-materials/${id}/stock`, {
       params: { date }
     });
     return response.data?.data || response.data;
@@ -47,7 +47,7 @@ export const getStockByDate = async (id, date) => {
  */
 export const getStockHistory = async (id, startDate, endDate) => {
   try {
-    const response = await apiService.get(`/api/raw-materials/${id}/stock/history`, {
+    const response = await apiService.get(`/billing/api/raw-materials/${id}/stock/history`, {
       params: { startDate, endDate }
     });
     return response.data?.data || response.data || [];
@@ -65,7 +65,7 @@ export const getStockHistory = async (id, startDate, endDate) => {
  */
 export const adjustStock = async (id, adjustmentData) => {
   try {
-    const response = await apiService.post(`/api/raw-materials/${id}/stock/adjust`, adjustmentData);
+    const response = await apiService.post(`/billing/api/raw-materials/${id}/stock/adjust`, adjustmentData);
     return response.data?.data || response.data;
   } catch (error) {
     console.error('Error adjusting stock:', error);

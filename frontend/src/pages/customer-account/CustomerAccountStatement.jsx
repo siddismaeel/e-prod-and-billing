@@ -113,10 +113,46 @@ const CustomerAccountStatement = () => {
           {statement && (
             <Grid item xs={12}>
               <Paper sx={{ p: 3, bgcolor: 'primary.light', color: 'primary.contrastText', mb: 3 }}>
-                <Typography variant="h6">Opening Balance: {statement.openingBalance || 0}</Typography>
-                <Typography variant="h6">Closing Balance: {statement.closingBalance || 0}</Typography>
-                <Typography variant="body1">Total Credit: {statement.totalCredit || 0}</Typography>
-                <Typography variant="body1">Total Debit: {statement.totalDebit || 0}</Typography>
+                <Typography variant="h5" gutterBottom>
+                  {statement.customerName || `Customer ID: ${statement.customerId}`}
+                </Typography>
+                <Typography variant="body2" sx={{ mb: 2, opacity: 0.9 }}>
+                  Period: {new Date(statement.startDate).toLocaleDateString()} to {new Date(statement.endDate).toLocaleDateString()}
+                </Typography>
+                <Box sx={{ mt: 2, pt: 2, borderTop: '1px solid rgba(255, 255, 255, 0.3)' }}>
+                  <Grid container spacing={2}>
+                    <Grid item xs={12} md={6}>
+                      <Typography variant="body2" sx={{ opacity: 0.9 }}>Opening Balance</Typography>
+                      <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+                        ₹{Number(statement.openingBalance || 0).toFixed(2)}
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <Typography variant="body2" sx={{ opacity: 0.9 }}>Closing Balance</Typography>
+                      <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+                        ₹{Number(statement.closingBalance || 0).toFixed(2)}
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <Typography variant="body2" sx={{ opacity: 0.9 }}>Total Credit</Typography>
+                      <Typography variant="body1" sx={{ fontWeight: 'medium' }}>
+                        ₹{Number(statement.totalCredit || 0).toFixed(2)}
+                      </Typography>
+                      <Typography variant="caption" sx={{ opacity: 0.8, display: 'block', mt: 0.5 }}>
+                        (Money coming in: Sales + Payments Received)
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <Typography variant="body2" sx={{ opacity: 0.9 }}>Total Debit</Typography>
+                      <Typography variant="body1" sx={{ fontWeight: 'medium' }}>
+                        ₹{Number(statement.totalDebit || 0).toFixed(2)}
+                      </Typography>
+                      <Typography variant="caption" sx={{ opacity: 0.8, display: 'block', mt: 0.5 }}>
+                        (Money going out: Purchases + Payments Made)
+                      </Typography>
+                    </Grid>
+                  </Grid>
+                </Box>
               </Paper>
             </Grid>
           )}

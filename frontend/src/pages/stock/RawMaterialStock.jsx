@@ -1,8 +1,9 @@
-import { useState } from 'react';
-import { Container, Typography, Paper, Box, TextField, Button, Grid, Alert, CircularProgress, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
+import { useState, useEffect } from 'react';
+import { Container, Typography, Paper, Box, TextField, Button, Grid, Alert, CircularProgress, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
 import InventoryIcon from '@mui/icons-material/Inventory';
 import SearchIcon from '@mui/icons-material/Search';
 import { getCurrentStock, getStockHistory, adjustStock } from '../../services/rawMaterialStockService';
+import { getAllRawMaterials } from '../../services/rawMaterialService';
 
 const RawMaterialStock = () => {
   const [loading, setLoading] = useState(false);
@@ -14,13 +15,35 @@ const RawMaterialStock = () => {
   const [startDate, setStartDate] = useState(new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]);
   const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
   const [adjustmentData, setAdjustmentData] = useState({ quantity: '', remarks: '' });
+  
+  // Dropdown data
+  const [rawMaterials, setRawMaterials] = useState([]);
+  const [loadingRawMaterials, setLoadingRawMaterials] = useState(true);
+
+  // Fetch raw materials on component mount
+  useEffect(() => {
+    fetchRawMaterials();
+  }, []);
+
+  const fetchRawMaterials = async () => {
+    try {
+      setLoadingRawMaterials(true);
+      const data = await getAllRawMaterials();
+      setRawMaterials(data || []);
+    } catch (err) {
+      console.error('Error fetching raw materials:', err);
+      setError('Failed to load raw materials. Please refresh the page.');
+    } finally {
+      setLoadingRawMaterials(false);
+    }
+  };
 
   const fetchCurrentStock = async () => {
     if (!rawMaterialId) return;
     try {
       setLoading(true);
       setError('');
-      const stock = await getCurrentStock(rawMaterialId);
+      const stock = await getCurrentStock(Number(rawMaterialId));
       setCurrentStock(stock);
     } catch (err) {
       setError(err.response?.data?.message || err.message || 'Failed to fetch current stock');
@@ -34,7 +57,7 @@ const RawMaterialStock = () => {
     try {
       setLoading(true);
       setError('');
-      const history = await getStockHistory(rawMaterialId, startDate, endDate);
+      const history = await getStockHistory(Number(rawMaterialId), startDate, endDate);
       setStockHistory(history || []);
     } catch (err) {
       setError(err.response?.data?.message || err.message || 'Failed to fetch stock history');
@@ -46,14 +69,14 @@ const RawMaterialStock = () => {
   const handleAdjustStock = async (e) => {
     e.preventDefault();
     if (!rawMaterialId) {
-      setError('Please enter Raw Material ID');
+      setError('Please select a Raw Material');
       return;
     }
     try {
       setLoading(true);
       setError('');
       setSuccess('');
-      await adjustStock(rawMaterialId, adjustmentData);
+      await adjustStock(Number(rawMaterialId), adjustmentData);
       setSuccess('Stock adjusted successfully!');
       fetchCurrentStock();
       fetchStockHistory();
@@ -81,7 +104,35 @@ const RawMaterialStock = () => {
       <Paper sx={{ p: 4 }}>
         <Grid container spacing={3}>
           <Grid item xs={12} md={6}>
-            <TextField fullWidth label="Raw Material ID" value={rawMaterialId} onChange={(e) => setRawMaterialId(e.target.value)} type="number" />
+            <FormControl fullWidth disabled={loadingRawMaterials}>
+              <InputLabel id="raw-material-select-label">Raw Material</InputLabel>
+              <Select
+                labelId="raw-material-select-label"
+                id="raw-material-select"
+                value={rawMaterialId}
+                label="Raw Material"
+                onChange={(e) => setRawMaterialId(e.target.value)}
+                displayEmpty
+              >
+                <MenuItem value="">
+                  <em>Select Raw Material</em>
+                </MenuItem>
+                {loadingRawMaterials ? (
+                  <MenuItem disabled>
+                    <CircularProgress size={20} sx={{ mr: 1 }} />
+                    Loading raw materials...
+                  </MenuItem>
+                ) : rawMaterials.length === 0 ? (
+                  <MenuItem disabled>No raw materials available</MenuItem>
+                ) : (
+                  rawMaterials.map((rm) => (
+                    <MenuItem key={rm.id} value={rm.id}>
+                      {rm.name || `Raw Material ${rm.id}`}
+                    </MenuItem>
+                  ))
+                )}
+              </Select>
+            </FormControl>
           </Grid>
           <Grid item xs={12} md={3}>
             <Button fullWidth variant="contained" onClick={fetchCurrentStock} disabled={loading || !rawMaterialId} sx={{ height: '56px' }}>Get Current Stock</Button>

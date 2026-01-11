@@ -28,7 +28,7 @@ public class CustomerAccountService {
 
     @Transactional
     public CustomerAccount getOrCreateAccount(Long customerId) {
-        return accountRepository.findByCustomerId(customerId)
+        return accountRepository.findByCustomerIdWithCustomer(customerId)
                 .orElseGet(() -> {
                     Customer customer = customerRepository.findById(customerId)
                             .orElseThrow(() -> new RuntimeException("Customer not found with id: " + customerId));
@@ -118,8 +118,8 @@ public class CustomerAccountService {
         Customer customer = customerRepository.findById(customerId)
                 .orElseThrow(() -> new RuntimeException("Customer not found"));
 
-        // Get opening balance (balance before start date)
-        BigDecimal openingBalance = account.getOpeningBalance();
+        // Calculate opening balance from all transactions before start date
+        BigDecimal openingBalance = calculateOpeningBalance(customerId, startDate);
 
         // Get all transactions in date range
         List<StatementLineItemDTO> transactions = new ArrayList<>();
@@ -224,6 +224,13 @@ public class CustomerAccountService {
         statement.setTotalPurchases(totalPurchases);
         statement.setTotalPaymentsReceived(totalPaymentsReceived);
         statement.setTotalPaymentsMade(totalPaymentsMade);
+        
+        // Calculate total credit and debit for the period
+        BigDecimal totalCredit = totalSales.add(totalPaymentsReceived);  // Money coming in
+        BigDecimal totalDebit = totalPurchases.add(totalPaymentsMade);   // Money going out
+        statement.setTotalCredit(totalCredit);
+        statement.setTotalDebit(totalDebit);
+        
         statement.setTransactions(transactions);
 
         return statement;
@@ -267,6 +274,51 @@ public class CustomerAccountService {
         return convertToDTO(account);
     }
 
+    private BigDecimal calculateOpeningBalance(Long customerId, LocalDate startDate) {
+        BigDecimal openingBalance = BigDecimal.ZERO;
+        
+        // Get all sales orders before start date
+        BigDecimal totalReceivableBefore = salesOrderRepository.findByCustomerId(customerId).stream()
+                .filter(o -> o.getDeletedAt() == null && o.getOrderDate().isBefore(startDate))
+                .map(SalesOrder::getTotalAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        
+        // Get all purchase orders before start date
+        BigDecimal totalPayableBefore = purchaseOrderRepository.findByCustomerId(customerId).stream()
+                .filter(o -> o.getDeletedAt() == null && o.getOrderDate().isBefore(startDate))
+                .map(PurchaseOrder::getTotalAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        
+        // Get all payments before start date
+        List<PaymentTransaction> paymentsBefore = paymentTransactionRepository.findByCustomerId(customerId).stream()
+                .filter(p -> p.getTransactionDate().isBefore(startDate))
+                .collect(Collectors.toList());
+        
+        BigDecimal totalPaidBefore = paymentsBefore.stream()
+                .filter(p -> "SALES_PAYMENT".equals(p.getTransactionType()))
+                .map(PaymentTransaction::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        
+        BigDecimal totalPaidOutBefore = paymentsBefore.stream()
+                .filter(p -> "PURCHASE_PAYMENT".equals(p.getTransactionType()))
+                .map(PaymentTransaction::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        
+        // Opening Balance = Base Opening Balance + Receivables - Payables - Paid + Paid Out
+        CustomerAccount account = accountRepository.findByCustomerId(customerId).orElse(null);
+        BigDecimal baseOpeningBalance = account != null && account.getOpeningBalance() != null 
+                ? account.getOpeningBalance() 
+                : BigDecimal.ZERO;
+        
+        openingBalance = baseOpeningBalance
+                .add(totalReceivableBefore)
+                .subtract(totalPayableBefore)
+                .subtract(totalPaidBefore)
+                .add(totalPaidOutBefore);
+        
+        return openingBalance;
+    }
+
     private void recalculateCurrentBalance(CustomerAccount account) {
         // Current Balance = Opening Balance + Total Receivable - Total Payable - Total Paid + Total Paid Out
         BigDecimal balance = account.getOpeningBalance()
@@ -281,15 +333,31 @@ public class CustomerAccountService {
     private CustomerAccountDTO convertToDTO(CustomerAccount account) {
         CustomerAccountDTO dto = new CustomerAccountDTO();
         dto.setId(account.getId());
-        dto.setCustomerId(account.getCustomer().getId());
-        dto.setCustomerName(account.getCustomer().getName());
-        dto.setOpeningBalance(account.getOpeningBalance());
-        dto.setCurrentBalance(account.getCurrentBalance());
-        dto.setTotalReceivable(account.getTotalReceivable());
-        dto.setTotalPayable(account.getTotalPayable());
-        dto.setTotalPaid(account.getTotalPaid());
-        dto.setTotalPaidOut(account.getTotalPaidOut());
+        
+        if (account.getCustomer() != null) {
+            dto.setCustomerId(account.getCustomer().getId());
+            if (account.getCustomer().getName() != null) {
+                dto.setCustomerName(account.getCustomer().getName());
+            }
+        }
+        
+        dto.setOpeningBalance(account.getOpeningBalance() != null ? account.getOpeningBalance() : BigDecimal.ZERO);
+        dto.setCurrentBalance(account.getCurrentBalance() != null ? account.getCurrentBalance() : BigDecimal.ZERO);
+        dto.setTotalReceivable(account.getTotalReceivable() != null ? account.getTotalReceivable() : BigDecimal.ZERO);
+        dto.setTotalPayable(account.getTotalPayable() != null ? account.getTotalPayable() : BigDecimal.ZERO);
+        dto.setTotalPaid(account.getTotalPaid() != null ? account.getTotalPaid() : BigDecimal.ZERO);
+        dto.setTotalPaidOut(account.getTotalPaidOut() != null ? account.getTotalPaidOut() : BigDecimal.ZERO);
         dto.setLastTransactionDate(account.getLastTransactionDate());
+        
+        // Map convenience fields for frontend compatibility
+        BigDecimal currentBalance = account.getCurrentBalance() != null ? account.getCurrentBalance() : BigDecimal.ZERO;
+        BigDecimal totalReceivable = account.getTotalReceivable() != null ? account.getTotalReceivable() : BigDecimal.ZERO;
+        BigDecimal totalPayable = account.getTotalPayable() != null ? account.getTotalPayable() : BigDecimal.ZERO;
+        
+        dto.setBalance(currentBalance);
+        dto.setTotalCredit(totalReceivable);  // Money owed to you (credit)
+        dto.setTotalDebit(totalPayable);      // Money you owe (debit)
+        
         return dto;
     }
 }

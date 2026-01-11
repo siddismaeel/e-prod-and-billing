@@ -115,15 +115,96 @@ const ViewCustomerAccount = () => {
           {account && (
             <>
               <Grid item xs={12}>
-                <Paper sx={{ p: 3, bgcolor: 'primary.light', color: 'primary.contrastText' }}>
-                  <Typography variant="h6">Customer ID: {account.customerId}</Typography>
-                  <Typography variant="h6">Balance: {account.balance || 0}</Typography>
-                  <Typography variant="body1">Total Credit: {account.totalCredit || 0}</Typography>
-                  <Typography variant="body1">Total Debit: {account.totalDebit || 0}</Typography>
+                <Paper sx={{ p: 3, bgcolor: 'primary.light', color: 'primary.contrastText', mb: 2 }}>
+                  <Typography variant="h5" gutterBottom>
+                    {account.customerName || `Customer ID: ${account.customerId}`}
+                  </Typography>
+                  <Typography variant="body2" sx={{ mb: 2, opacity: 0.9 }}>
+                    Customer ID: {account.customerId}
+                  </Typography>
+                  <Box sx={{ mt: 2, pt: 2, borderTop: '1px solid rgba(255, 255, 255, 0.3)' }}>
+                    <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 1 }}>
+                      Balance: ₹{Number(account.balance || account.currentBalance || 0).toFixed(2)}
+                    </Typography>
+                    <Typography variant="body2" sx={{ opacity: 0.8 }}>
+                      {Number(account.balance || account.currentBalance || 0) >= 0 
+                        ? 'Customer owes you' 
+                        : 'You owe customer'}
+                    </Typography>
+                  </Box>
                 </Paper>
               </Grid>
               <Grid item xs={12}>
-                <Button variant="outlined" onClick={handleRecalculate} disabled={loading}>Recalculate Balance</Button>
+                <Paper sx={{ p: 3 }}>
+                  <Typography variant="h6" gutterBottom sx={{ mb: 2, color: 'primary.main' }}>
+                    Account Details
+                  </Typography>
+                  <Grid container spacing={2}>
+                    <Grid item xs={12} md={6}>
+                      <Typography variant="body2" color="text.secondary">Opening Balance</Typography>
+                      <Typography variant="body1" sx={{ fontWeight: 'medium', mb: 2 }}>
+                        ₹{Number(account.openingBalance || 0).toFixed(2)}
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <Typography variant="body2" color="text.secondary">Current Balance</Typography>
+                      <Typography variant="body1" sx={{ fontWeight: 'medium', mb: 2 }}>
+                        ₹{Number(account.currentBalance || 0).toFixed(2)}
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <Typography variant="body2" color="text.secondary">Total Receivable</Typography>
+                      <Typography variant="body1" sx={{ fontWeight: 'medium', mb: 2, color: 'success.main' }}>
+                        ₹{Number(account.totalReceivable || account.totalCredit || 0).toFixed(2)}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        (Money owed TO you from sales orders)
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <Typography variant="body2" color="text.secondary">Total Payable</Typography>
+                      <Typography variant="body1" sx={{ fontWeight: 'medium', mb: 2, color: 'error.main' }}>
+                        ₹{Number(account.totalPayable || account.totalDebit || 0).toFixed(2)}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        (Money YOU owe from purchase orders)
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <Typography variant="body2" color="text.secondary">Total Paid</Typography>
+                      <Typography variant="body1" sx={{ fontWeight: 'medium', mb: 2, color: 'success.main' }}>
+                        ₹{Number(account.totalPaid || 0).toFixed(2)}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        (Payments received from customer)
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <Typography variant="body2" color="text.secondary">Total Paid Out</Typography>
+                      <Typography variant="body1" sx={{ fontWeight: 'medium', mb: 2, color: 'error.main' }}>
+                        ₹{Number(account.totalPaidOut || 0).toFixed(2)}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        (Payments made to customer as supplier)
+                      </Typography>
+                    </Grid>
+                    {account.lastTransactionDate && (
+                      <Grid item xs={12}>
+                        <Typography variant="body2" color="text.secondary">Last Transaction Date</Typography>
+                        <Typography variant="body1" sx={{ fontWeight: 'medium' }}>
+                          {new Date(account.lastTransactionDate).toLocaleDateString()}
+                        </Typography>
+                      </Grid>
+                    )}
+                  </Grid>
+                </Paper>
+              </Grid>
+              <Grid item xs={12}>
+                <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
+                  <Button variant="outlined" onClick={handleRecalculate} disabled={loading}>
+                    {loading ? <CircularProgress size={20} /> : 'Recalculate Balance'}
+                  </Button>
+                </Box>
               </Grid>
             </>
           )}

@@ -22,6 +22,11 @@ public class CustomerAccountDTO {
     private BigDecimal totalPaid;
     private BigDecimal totalPaidOut;
     private LocalDate lastTransactionDate;
+    
+    // Convenience fields for frontend compatibility
+    private BigDecimal balance;      // Maps to currentBalance
+    private BigDecimal totalCredit;  // Maps to totalReceivable (money owed to you)
+    private BigDecimal totalDebit;   // Maps to totalPayable (money you owe)
 }
 
 
