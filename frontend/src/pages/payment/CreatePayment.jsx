@@ -29,9 +29,19 @@ const CreatePayment = () => {
   // Fetch dropdown data on component mount
   useEffect(() => {
     fetchCustomers();
-    fetchSalesOrders();
-    fetchPurchaseOrders();
   }, []);
+
+  // Fetch orders when customer is selected
+  useEffect(() => {
+    if (formData.customerId) {
+      fetchSalesOrdersForCustomer(Number(formData.customerId));
+      fetchPurchaseOrdersForCustomer(Number(formData.customerId));
+    } else {
+      // Clear orders when no customer is selected
+      setSalesOrders([]);
+      setPurchaseOrders([]);
+    }
+  }, [formData.customerId]);
 
   // Fetch customers
   const fetchCustomers = async () => {
@@ -47,12 +57,14 @@ const CreatePayment = () => {
     }
   };
 
-  // Fetch sales orders
-  const fetchSalesOrders = async () => {
+  // Fetch sales orders for specific customer
+  const fetchSalesOrdersForCustomer = async (customerId) => {
     try {
       setLoadingSalesOrders(true);
-      const data = await getAllSalesOrders();
-      setSalesOrders(data || []);
+      const allOrders = await getAllSalesOrders();
+      // Filter orders by customer ID
+      const customerOrders = allOrders.filter(order => order.customerId === customerId);
+      setSalesOrders(customerOrders || []);
     } catch (err) {
       console.error('Error fetching sales orders:', err);
       setError('Failed to load sales orders. Please refresh the page.');
@@ -61,12 +73,14 @@ const CreatePayment = () => {
     }
   };
 
-  // Fetch purchase orders
-  const fetchPurchaseOrders = async () => {
+  // Fetch purchase orders for specific customer
+  const fetchPurchaseOrdersForCustomer = async (customerId) => {
     try {
       setLoadingPurchaseOrders(true);
-      const data = await getAllPurchaseOrders();
-      setPurchaseOrders(data || []);
+      const allOrders = await getAllPurchaseOrders();
+      // Filter orders by customer ID
+      const customerOrders = allOrders.filter(order => order.customerId === customerId);
+      setPurchaseOrders(customerOrders || []);
     } catch (err) {
       console.error('Error fetching purchase orders:', err);
       setError('Failed to load purchase orders. Please refresh the page.');
@@ -78,8 +92,8 @@ const CreatePayment = () => {
   const handleChange = (e) => {
     const { name, value } = e.target;
     
-    // If orderType changes, clear orderId
-    if (name === 'orderType') {
+    // If orderType or customerId changes, clear orderId
+    if (name === 'orderType' || name === 'customerId') {
       setFormData((prev) => ({ ...prev, [name]: value, orderId: '' }));
     } else {
       setFormData((prev) => ({ ...prev, [name]: value }));
@@ -184,7 +198,7 @@ const CreatePayment = () => {
               </FormControl>
             </Grid>
             <Grid item xs={12} md={6}>
-              <FormControl fullWidth error={!!error && !formData.orderId} disabled={loading || (formData.orderType === 'SALES' ? loadingSalesOrders : loadingPurchaseOrders)}>
+              <FormControl fullWidth error={!!error && !formData.orderId} disabled={loading || !formData.customerId || (formData.orderType === 'SALES' ? loadingSalesOrders : loadingPurchaseOrders)}>
                 <InputLabel id="order-select-label">Order (Optional)</InputLabel>
                 <Select
                   labelId="order-select-label"
