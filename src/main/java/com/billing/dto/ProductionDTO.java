@@ -20,6 +20,10 @@ public class ProductionDTO {
     @NotNull(message = "Ready item ID is required")
     private Long readyItemId;
 
+    private String readyItemName;
+
+    private String unit;
+
     @NotBlank(message = "Quality is required")
     private String quality;
 

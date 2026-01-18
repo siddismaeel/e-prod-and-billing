@@ -167,6 +167,8 @@ public class ProductionService {
         ProductionDTO dto = new ProductionDTO();
         dto.setId(production.getId());
         dto.setReadyItemId(production.getReadyItem().getId());
+        dto.setReadyItemName(production.getReadyItem().getName());
+        dto.setUnit(production.getReadyItem().getUnit());
         dto.setQuality(production.getQuality());
         dto.setQuantityProduced(production.getQuantityProduced());
         dto.setProductionDate(production.getProductionDate());

@@ -45,8 +45,19 @@ const ListProduction = () => {
 
   const columns = [
     { field: 'id', headerName: 'ID', width: 100 },
-    { field: 'readyItemId', headerName: 'Ready Item ID', flex: 1, minWidth: 150 },
-    { field: 'quantity', headerName: 'Quantity', flex: 1, minWidth: 120 },
+    { field: 'readyItemName', headerName: 'Ready Item', flex: 1, minWidth: 150 },
+    { 
+      field: 'quantityProduced', 
+      headerName: 'Quantity', 
+      flex: 1, 
+      minWidth: 120,
+      valueGetter: (value, row) => row.quantityProduced || 0,
+      renderCell: (params) => {
+        const quantity = params.value || 0;
+        const unit = params.row.unit || '';
+        return `${Number(quantity).toFixed(2)} ${unit}`.trim();
+      }
+    },
     { field: 'quality', headerName: 'Quality', flex: 1, minWidth: 120 },
     { field: 'productionDate', headerName: 'Production Date', flex: 1, minWidth: 150 },
   ];

@@ -58,7 +58,8 @@ public class ProductionRecipeService {
         
         Map<Long, BigDecimal> requiredMaterials = new HashMap<>();
         for (ProductionRecipe recipe : recipes) {
-            BigDecimal totalRequired = recipe.getQuantityRequired().multiply(quantity);
+            // Recipe quantities already represent total batch amounts - use as-is
+            BigDecimal totalRequired = recipe.getQuantityRequired();
             requiredMaterials.put(recipe.getRawMaterial().getId(), totalRequired);
         }
         
