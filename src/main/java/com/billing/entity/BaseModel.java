@@ -3,13 +3,17 @@ package com.billing.entity;
 import java.util.Date;
 import java.util.Objects;
 
+import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedBy;
 import org.springframework.data.annotation.LastModifiedDate;
 
 import jakarta.persistence.Column;
+import jakarta.persistence.EntityListeners;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.MappedSuperclass;
 import jakarta.persistence.SequenceGenerator;
@@ -17,8 +21,11 @@ import jakarta.persistence.Temporal;
 import jakarta.persistence.TemporalType;
 import lombok.Data;
 
+import com.billing.listener.BaseEntityListener;
+
 @Data
 @MappedSuperclass
+@EntityListeners(BaseEntityListener.class)
 public abstract class BaseModel {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "BASE_MODEL_SEQ")
@@ -34,11 +41,13 @@ public abstract class BaseModel {
     private Date updatedAt;
 
     @ManyToOne
-//    @CreatedBy
+    @JoinColumn(name = "created_by")
+    @CreatedBy
     private User createdBy;
 
     @ManyToOne
-//    @LastModifiedBy
+    @JoinColumn(name = "updated_by")
+    @LastModifiedBy
     private User updatedBy;
 
     @Column(name = "client_ip")
