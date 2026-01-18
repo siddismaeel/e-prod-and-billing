@@ -19,8 +19,12 @@ public class ProductionRecipeDTO {
     @NotNull(message = "Ready item ID is required")
     private Long readyItemId;
 
+    private String readyItemName;
+
     @NotNull(message = "Raw material ID is required")
     private Long rawMaterialId;
+
+    private String rawMaterialName;
 
     @NotBlank(message = "Quality is required")
     private String quality;

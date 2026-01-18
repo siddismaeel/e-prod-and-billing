@@ -28,6 +28,12 @@ public class MaterialConsumptionDTO {
 
     private Long readyItemId;
 
+    private String quality; // Optional: for recipe creation
+
+    private BigDecimal readyItemQuantity; // Optional: for recipe creation
+
+    private String unit; // Optional: for recipe creation (usually from RawMaterial)
+
     private Long productionBatchId;
 
     @NotNull(message = "Date is required")

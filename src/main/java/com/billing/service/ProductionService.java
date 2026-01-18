@@ -48,8 +48,11 @@ public class ProductionService {
         for (Map.Entry<Long, BigDecimal> entry : requiredMaterials.entrySet()) {
             BigDecimal currentStock = stockService.getCurrentStock(entry.getKey());
             if (currentStock.compareTo(entry.getValue()) < 0) {
-                throw new RuntimeException("Insufficient stock for raw material ID: " + entry.getKey() +
-                        ". Required: " + entry.getValue() + ", Available: " + currentStock);
+                RawMaterial rawMaterial = rawMaterialRepository.findById(entry.getKey())
+                        .orElseThrow(() -> new RuntimeException("Raw material not found with id: " + entry.getKey()));
+                String unit = rawMaterial.getUnit();
+                throw new RuntimeException("Insufficient stock for raw material: " + rawMaterial.getName() +
+                        ". Required: " + entry.getValue() + " " + unit + ", Available: " + currentStock + " " + unit);
             }
         }
 

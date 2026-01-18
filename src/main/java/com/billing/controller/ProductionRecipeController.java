@@ -31,6 +31,11 @@ public class ProductionRecipeController {
         return ResponseEntity.ok(recipeService.getAllRecipesByReadyItem(readyItemId));
     }
 
+    @GetMapping("/raw-material/{rawMaterialId}")
+    public ResponseEntity<List<ProductionRecipeDTO>> getRecipesByRawMaterial(@PathVariable Long rawMaterialId) {
+        return ResponseEntity.ok(recipeService.getAllRecipesByRawMaterial(rawMaterialId));
+    }
+
     @GetMapping("/ready-item/{readyItemId}/quality/{quality}")
     public ResponseEntity<List<ProductionRecipeDTO>> getRecipesByQuality(
             @PathVariable Long readyItemId,

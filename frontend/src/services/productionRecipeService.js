@@ -12,7 +12,7 @@ import { apiService } from './api';
  */
 export const upsertRecipe = async (recipeData) => {
   try {
-    const response = await apiService.post('/api/production-recipes', recipeData);
+    const response = await apiService.post('/billing/api/production-recipes', recipeData);
     return response.data?.data || response.data;
   } catch (error) {
     console.error('Error upserting recipe:', error);
@@ -27,7 +27,7 @@ export const upsertRecipe = async (recipeData) => {
  */
 export const getRecipesByReadyItem = async (readyItemId) => {
   try {
-    const response = await apiService.get(`/api/production-recipes/ready-item/${readyItemId}`);
+    const response = await apiService.get(`/billing/api/production-recipes/ready-item/${readyItemId}`);
     return response.data?.data || response.data || [];
   } catch (error) {
     console.error('Error fetching recipes by ready item:', error);
@@ -43,10 +43,25 @@ export const getRecipesByReadyItem = async (readyItemId) => {
  */
 export const getRecipesByQuality = async (readyItemId, quality) => {
   try {
-    const response = await apiService.get(`/api/production-recipes/ready-item/${readyItemId}/quality/${quality}`);
+    const response = await apiService.get(`/billing/api/production-recipes/ready-item/${readyItemId}/quality/${quality}`);
     return response.data?.data || response.data || [];
   } catch (error) {
     console.error('Error fetching recipes by quality:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get recipes by raw material
+ * @param {number} rawMaterialId - Raw material ID
+ * @returns {Promise} Array of recipes
+ */
+export const getRecipesByRawMaterial = async (rawMaterialId) => {
+  try {
+    const response = await apiService.get(`/billing/api/production-recipes/raw-material/${rawMaterialId}`);
+    return response.data?.data || response.data || [];
+  } catch (error) {
+    console.error('Error fetching recipes by raw material:', error);
     throw error;
   }
 };
@@ -61,7 +76,7 @@ export const getRecipesByQuality = async (readyItemId, quality) => {
 export const calculateRequiredMaterials = async (readyItemId, quality, quantity) => {
   try {
     const response = await apiService.get(
-      `/api/production-recipes/ready-item/${readyItemId}/quality/${quality}/calculate`,
+      `/billing/api/production-recipes/ready-item/${readyItemId}/quality/${quality}/calculate`,
       { params: { quantity } }
     );
     return response.data?.data || response.data || {};

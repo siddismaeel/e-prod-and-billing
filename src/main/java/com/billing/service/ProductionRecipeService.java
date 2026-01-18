@@ -71,11 +71,19 @@ public class ProductionRecipeService {
                 .collect(Collectors.toList());
     }
 
+    public List<ProductionRecipeDTO> getAllRecipesByRawMaterial(Long rawMaterialId) {
+        return recipeRepository.findByRawMaterialId(rawMaterialId).stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
     private ProductionRecipeDTO convertToDTO(ProductionRecipe recipe) {
         ProductionRecipeDTO dto = new ProductionRecipeDTO();
         dto.setId(recipe.getId());
         dto.setReadyItemId(recipe.getReadyItem().getId());
+        dto.setReadyItemName(recipe.getReadyItem().getName());
         dto.setRawMaterialId(recipe.getRawMaterial().getId());
+        dto.setRawMaterialName(recipe.getRawMaterial().getName());
         dto.setQuality(recipe.getQuality());
         dto.setQuantityRequired(recipe.getQuantityRequired());
         dto.setUnit(recipe.getUnit());

@@ -11,7 +11,7 @@ import { apiService } from './api';
  */
 export const getAllProductions = async () => {
   try {
-    const response = await apiService.get('/api/productions');
+    const response = await apiService.get('/billing/api/productions');
     return response.data?.data || response.data || [];
   } catch (error) {
     console.error('Error fetching productions:', error);
@@ -26,7 +26,7 @@ export const getAllProductions = async () => {
  */
 export const produceReadyItem = async (productionData) => {
   try {
-    const response = await apiService.post('/api/productions', productionData);
+    const response = await apiService.post('/billing/api/productions', productionData);
     return response.data?.data || response.data;
   } catch (error) {
     console.error('Error creating production:', error);
