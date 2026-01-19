@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   Drawer,
   List,
@@ -53,6 +53,42 @@ const menuItems = [
   // { text: 'Settings', icon: <SettingsIcon />, path: '/settings' },
 ];
 
+// Menu-to-Right mapping configuration
+// Maps menu keys to actual right names as they appear in the API response
+const MENU_RIGHT_MAPPING = {
+  DASHBOARD: 'Dashboard',
+  ORGANIZATION: 'Organization',
+  COMPANY: 'Company',
+  ROLE: 'Role',
+  BRANCH: 'Branch',
+  DEPARTMENT: 'Department',
+  USER: 'Users',
+  CUSTOMER: 'Customer',
+  RAW_MATERIAL: 'Raw Material',
+  READY_ITEM: 'Ready Item',
+  SALES_ORDER: 'Sales Order',
+  PURCHASE_ORDER: 'Purchase Order',
+  PRODUCTION: 'Production',
+  MATERIAL_CONSUMPTION: 'Material Consumption',
+  PRODUCTION_RECIPE: 'Production Recipe',
+  PROPOSITION: 'Proposition',
+  STOCK: 'Stock',
+  PAYMENT: 'Payment',
+  CASHFLOW: 'Cashflow',
+  CUSTOMER_ACCOUNT: 'Customer Account',
+};
+
+// Default menus for System_Admin (always visible)
+const SYSTEM_ADMIN_DEFAULT_MENUS = [
+  'DASHBOARD',
+  'ORGANIZATION',
+  'COMPANY',
+  'ROLE',
+  'BRANCH',
+  'DEPARTMENT',
+  'USER',
+];
+
 const Sidebar = ({ mobileOpen, onMobileClose }) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -75,6 +111,101 @@ const Sidebar = ({ mobileOpen, onMobileClose }) => {
   const [paymentOpen, setPaymentOpen] = useState(false);
   const [cashflowOpen, setCashflowOpen] = useState(false);
   const [customerAccountOpen, setCustomerAccountOpen] = useState(false);
+
+  // State for user role and rights
+  const [isSystemAdmin, setIsSystemAdmin] = useState(false);
+  const [userRights, setUserRights] = useState([]);
+
+  // Load currentUser from localStorage and extract roles/rights
+  useEffect(() => {
+    try {
+      const currentUserStr = localStorage.getItem('currentUser');
+      if (!currentUserStr) {
+        console.warn('No currentUser found in localStorage');
+        return;
+      }
+
+      const currentUser = JSON.parse(currentUserStr);
+      
+      // Check if user has System_Admin role
+      const checkIsSystemAdmin = (user) => {
+        if (!user || !user.roles || !Array.isArray(user.roles)) {
+          return false;
+        }
+        return user.roles.some(role => 
+          role.name && role.name.toLowerCase().includes('system_admin')
+        );
+      };
+
+      const adminStatus = checkIsSystemAdmin(currentUser);
+      setIsSystemAdmin(adminStatus);
+
+      // Extract rights from roles
+      const extractRights = (user) => {
+        if (!user || !user.roles || !Array.isArray(user.roles)) {
+          return [];
+        }
+
+        const rightsSet = new Set();
+        user.roles.forEach(role => {
+          // Check for rights array directly in role (new structure)
+          if (role.rights && Array.isArray(role.rights)) {
+            role.rights.forEach(right => {
+              if (right && right.name) {
+                rightsSet.add(right.name.trim());
+              }
+            });
+          }
+          // Fallback: Check for roleRights structure (old structure)
+          else if (role.roleRights && Array.isArray(role.roleRights)) {
+            role.roleRights.forEach(roleRight => {
+              if (roleRight.right && roleRight.right.name) {
+                rightsSet.add(roleRight.right.name.trim());
+              }
+            });
+          }
+        });
+
+        return Array.from(rightsSet);
+      };
+
+      const rights = extractRights(currentUser);
+      setUserRights(rights);
+      console.log('Extracted user rights:', rights);
+      console.log('Is System Admin:', adminStatus);
+    } catch (err) {
+      console.error('Error parsing currentUser from localStorage:', err);
+    }
+  }, []);
+
+  // Helper function to check if user has a specific right
+  const hasRight = (rightName) => {
+    if (!rightName) return false;
+    // Normalize both the right name and user rights for comparison (case-insensitive, trim whitespace)
+    const normalizedRightName = rightName.trim();
+    return userRights.some(right => right.trim().toLowerCase() === normalizedRightName.toLowerCase());
+  };
+
+  // Helper function to determine if a menu should be visible
+  const shouldShowMenu = (menuKey) => {
+    // System_Admin sees all menus
+    if (isSystemAdmin) {
+      return true;
+    }
+
+    // For other roles, check if they have the corresponding right
+    const rightName = MENU_RIGHT_MAPPING[menuKey];
+    if (!rightName) {
+      console.warn(`No mapping found for menu key: ${menuKey}`);
+      return false; // Unknown menu key
+    }
+
+    const hasAccess = hasRight(rightName);
+    if (!hasAccess) {
+      console.log(`Menu ${menuKey} (right: ${rightName}) not accessible. User rights:`, userRights);
+    }
+    return hasAccess;
+  };
 
   const handleDrawerToggle = () => {
     onMobileClose();
@@ -181,699 +312,775 @@ const Sidebar = ({ mobileOpen, onMobileClose }) => {
         ))}
         
         {/* Organization Menu */}
-        <ListItem disablePadding>
-          <ListItemButton onClick={handleOrganizationClick}>
-            <ListItemIcon>
-              <CorporateFareIcon />
-            </ListItemIcon>
-            <ListItemText primary="Organization" />
-            {organizationOpen ? <ExpandLess /> : <ExpandMore />}
-          </ListItemButton>
-        </ListItem>
-        <Collapse in={organizationOpen} timeout="auto" unmountOnExit>
-          <List component="div" disablePadding>
-            <ListItemButton
-              sx={{ pl: 4 }}
-              selected={location.pathname === '/organizations/create'}
-              onClick={() => handleNavigation('/organizations/create')}
-            >
-              <ListItemIcon>
-                <AddIcon />
-              </ListItemIcon>
-              <ListItemText primary="Create Organization" />
-            </ListItemButton>
-            <ListItemButton
-              sx={{ pl: 4 }}
-              selected={location.pathname === '/organizations/list'}
-              onClick={() => handleNavigation('/organizations/list')}
-            >
-              <ListItemIcon>
-                <ListIcon />
-              </ListItemIcon>
-              <ListItemText primary="List Organization" />
-            </ListItemButton>
-          </List>
-        </Collapse>
+        {shouldShowMenu('ORGANIZATION') && (
+          <>
+            <ListItem disablePadding>
+              <ListItemButton onClick={handleOrganizationClick}>
+                <ListItemIcon>
+                  <CorporateFareIcon />
+                </ListItemIcon>
+                <ListItemText primary="Organization" />
+                {organizationOpen ? <ExpandLess /> : <ExpandMore />}
+              </ListItemButton>
+            </ListItem>
+            <Collapse in={organizationOpen} timeout="auto" unmountOnExit>
+              <List component="div" disablePadding>
+                <ListItemButton
+                  sx={{ pl: 4 }}
+                  selected={location.pathname === '/organizations/create'}
+                  onClick={() => handleNavigation('/organizations/create')}
+                >
+                  <ListItemIcon>
+                    <AddIcon />
+                  </ListItemIcon>
+                  <ListItemText primary="Create Organization" />
+                </ListItemButton>
+                <ListItemButton
+                  sx={{ pl: 4 }}
+                  selected={location.pathname === '/organizations/list'}
+                  onClick={() => handleNavigation('/organizations/list')}
+                >
+                  <ListItemIcon>
+                    <ListIcon />
+                  </ListItemIcon>
+                  <ListItemText primary="List Organization" />
+                </ListItemButton>
+              </List>
+            </Collapse>
+          </>
+        )}
 
         {/* Company Menu */}
-        <ListItem disablePadding>
-          <ListItemButton onClick={handleCompanyClick}>
-            <ListItemIcon>
-              <DomainIcon />
-            </ListItemIcon>
-            <ListItemText primary="Company" />
-            {companyOpen ? <ExpandLess /> : <ExpandMore />}
-          </ListItemButton>
-        </ListItem>
-        <Collapse in={companyOpen} timeout="auto" unmountOnExit>
-          <List component="div" disablePadding>
-            <ListItemButton
-              sx={{ pl: 4 }}
-              selected={location.pathname === '/companies/create'}
-              onClick={() => handleNavigation('/companies/create')}
-            >
-              <ListItemIcon>
-                <AddIcon />
-              </ListItemIcon>
-              <ListItemText primary="Create Company" />
-            </ListItemButton>
-            <ListItemButton
-              sx={{ pl: 4 }}
-              selected={location.pathname === '/companies/list'}
-              onClick={() => handleNavigation('/companies/list')}
-            >
-              <ListItemIcon>
-                <ListIcon />
-              </ListItemIcon>
-              <ListItemText primary="List Company" />
-            </ListItemButton>
-          </List>
-        </Collapse>
+        {shouldShowMenu('COMPANY') && (
+          <>
+            <ListItem disablePadding>
+              <ListItemButton onClick={handleCompanyClick}>
+                <ListItemIcon>
+                  <DomainIcon />
+                </ListItemIcon>
+                <ListItemText primary="Company" />
+                {companyOpen ? <ExpandLess /> : <ExpandMore />}
+              </ListItemButton>
+            </ListItem>
+            <Collapse in={companyOpen} timeout="auto" unmountOnExit>
+              <List component="div" disablePadding>
+                <ListItemButton
+                  sx={{ pl: 4 }}
+                  selected={location.pathname === '/companies/create'}
+                  onClick={() => handleNavigation('/companies/create')}
+                >
+                  <ListItemIcon>
+                    <AddIcon />
+                  </ListItemIcon>
+                  <ListItemText primary="Create Company" />
+                </ListItemButton>
+                <ListItemButton
+                  sx={{ pl: 4 }}
+                  selected={location.pathname === '/companies/list'}
+                  onClick={() => handleNavigation('/companies/list')}
+                >
+                  <ListItemIcon>
+                    <ListIcon />
+                  </ListItemIcon>
+                  <ListItemText primary="List Company" />
+                </ListItemButton>
+              </List>
+            </Collapse>
+          </>
+        )}
 
         {/* Role Menu */}
-        <ListItem disablePadding>
-          <ListItemButton onClick={handleRoleClick}>
-            <ListItemIcon>
-              <BadgeIcon />
-            </ListItemIcon>
-            <ListItemText primary="Role" />
-            {roleOpen ? <ExpandLess /> : <ExpandMore />}
-          </ListItemButton>
-        </ListItem>
-        <Collapse in={roleOpen} timeout="auto" unmountOnExit>
-          <List component="div" disablePadding>
-            <ListItemButton
-              sx={{ pl: 4 }}
-              selected={location.pathname === '/roles/create'}
-              onClick={() => handleNavigation('/roles/create')}
-            >
-              <ListItemIcon>
-                <AddIcon />
-              </ListItemIcon>
-              <ListItemText primary="Create Role" />
-            </ListItemButton>
-            <ListItemButton
-              sx={{ pl: 4 }}
-              selected={location.pathname === '/roles/list'}
-              onClick={() => handleNavigation('/roles/list')}
-            >
-              <ListItemIcon>
-                <ListIcon />
-              </ListItemIcon>
-              <ListItemText primary="List Role" />
-            </ListItemButton>
-            <ListItemButton
-              sx={{ pl: 4 }}
-              selected={location.pathname === '/rights/create'}
-              onClick={() => handleNavigation('/rights/create')}
-            >
-              <ListItemIcon>
-                <SecurityIcon />
-              </ListItemIcon>
-              <ListItemText primary="Create Right" />
-            </ListItemButton>
-            <ListItemButton
-              sx={{ pl: 4 }}
-              selected={location.pathname === '/rights/list'}
-              onClick={() => handleNavigation('/rights/list')}
-            >
-              <ListItemIcon>
-                <ListIcon />
-              </ListItemIcon>
-              <ListItemText primary="List Right" />
-            </ListItemButton>
-            <ListItemButton
-              sx={{ pl: 4 }}
-              selected={location.pathname === '/role-right-mapping'}
-              onClick={() => handleNavigation('/role-right-mapping')}
-            >
-              <ListItemIcon>
-                <LinkIcon />
-              </ListItemIcon>
-              <ListItemText primary="Role Right Mapping" />
-            </ListItemButton>
-          </List>
-        </Collapse>
+        {shouldShowMenu('ROLE') && (
+          <>
+            <ListItem disablePadding>
+              <ListItemButton onClick={handleRoleClick}>
+                <ListItemIcon>
+                  <BadgeIcon />
+                </ListItemIcon>
+                <ListItemText primary="Role" />
+                {roleOpen ? <ExpandLess /> : <ExpandMore />}
+              </ListItemButton>
+            </ListItem>
+            <Collapse in={roleOpen} timeout="auto" unmountOnExit>
+              <List component="div" disablePadding>
+                <ListItemButton
+                  sx={{ pl: 4 }}
+                  selected={location.pathname === '/roles/create'}
+                  onClick={() => handleNavigation('/roles/create')}
+                >
+                  <ListItemIcon>
+                    <AddIcon />
+                  </ListItemIcon>
+                  <ListItemText primary="Create Role" />
+                </ListItemButton>
+                <ListItemButton
+                  sx={{ pl: 4 }}
+                  selected={location.pathname === '/roles/list'}
+                  onClick={() => handleNavigation('/roles/list')}
+                >
+                  <ListItemIcon>
+                    <ListIcon />
+                  </ListItemIcon>
+                  <ListItemText primary="List Role" />
+                </ListItemButton>
+                <ListItemButton
+                  sx={{ pl: 4 }}
+                  selected={location.pathname === '/rights/create'}
+                  onClick={() => handleNavigation('/rights/create')}
+                >
+                  <ListItemIcon>
+                    <SecurityIcon />
+                  </ListItemIcon>
+                  <ListItemText primary="Create Right" />
+                </ListItemButton>
+                <ListItemButton
+                  sx={{ pl: 4 }}
+                  selected={location.pathname === '/rights/list'}
+                  onClick={() => handleNavigation('/rights/list')}
+                >
+                  <ListItemIcon>
+                    <ListIcon />
+                  </ListItemIcon>
+                  <ListItemText primary="List Right" />
+                </ListItemButton>
+                <ListItemButton
+                  sx={{ pl: 4 }}
+                  selected={location.pathname === '/role-right-mapping'}
+                  onClick={() => handleNavigation('/role-right-mapping')}
+                >
+                  <ListItemIcon>
+                    <LinkIcon />
+                  </ListItemIcon>
+                  <ListItemText primary="Role Right Mapping" />
+                </ListItemButton>
+              </List>
+            </Collapse>
+          </>
+        )}
 
         {/* Branch Menu */}
-        <ListItem disablePadding>
-          <ListItemButton onClick={handleBranchClick}>
-            <ListItemIcon>
-              <AccountTreeIcon />
-            </ListItemIcon>
-            <ListItemText primary="Branch" />
-            {branchOpen ? <ExpandLess /> : <ExpandMore />}
-          </ListItemButton>
-        </ListItem>
-        <Collapse in={branchOpen} timeout="auto" unmountOnExit>
-          <List component="div" disablePadding>
-            <ListItemButton
-              sx={{ pl: 4 }}
-              selected={location.pathname === '/branches/create'}
-              onClick={() => handleNavigation('/branches/create')}
-            >
-              <ListItemIcon>
-                <AddIcon />
-              </ListItemIcon>
-              <ListItemText primary="Create Branch" />
-            </ListItemButton>
-            <ListItemButton
-              sx={{ pl: 4 }}
-              selected={location.pathname === '/branches/list'}
-              onClick={() => handleNavigation('/branches/list')}
-            >
-              <ListItemIcon>
-                <ListIcon />
-              </ListItemIcon>
-              <ListItemText primary="List Branch" />
-            </ListItemButton>
-          </List>
-        </Collapse>
+        {shouldShowMenu('BRANCH') && (
+          <>
+            <ListItem disablePadding>
+              <ListItemButton onClick={handleBranchClick}>
+                <ListItemIcon>
+                  <AccountTreeIcon />
+                </ListItemIcon>
+                <ListItemText primary="Branch" />
+                {branchOpen ? <ExpandLess /> : <ExpandMore />}
+              </ListItemButton>
+            </ListItem>
+            <Collapse in={branchOpen} timeout="auto" unmountOnExit>
+              <List component="div" disablePadding>
+                <ListItemButton
+                  sx={{ pl: 4 }}
+                  selected={location.pathname === '/branches/create'}
+                  onClick={() => handleNavigation('/branches/create')}
+                >
+                  <ListItemIcon>
+                    <AddIcon />
+                  </ListItemIcon>
+                  <ListItemText primary="Create Branch" />
+                </ListItemButton>
+                <ListItemButton
+                  sx={{ pl: 4 }}
+                  selected={location.pathname === '/branches/list'}
+                  onClick={() => handleNavigation('/branches/list')}
+                >
+                  <ListItemIcon>
+                    <ListIcon />
+                  </ListItemIcon>
+                  <ListItemText primary="List Branch" />
+                </ListItemButton>
+              </List>
+            </Collapse>
+          </>
+        )}
 
         {/* Department Menu */}
-        <ListItem disablePadding>
-          <ListItemButton onClick={handleDepartmentClick}>
-            <ListItemIcon>
-              <BusinessIcon />
-            </ListItemIcon>
-            <ListItemText primary="Department" />
-            {departmentOpen ? <ExpandLess /> : <ExpandMore />}
-          </ListItemButton>
-        </ListItem>
-        <Collapse in={departmentOpen} timeout="auto" unmountOnExit>
-          <List component="div" disablePadding>
-            <ListItemButton
-              sx={{ pl: 4 }}
-              selected={location.pathname === '/departments/create'}
-              onClick={() => handleNavigation('/departments/create')}
-            >
-              <ListItemIcon>
-                <AddIcon />
-              </ListItemIcon>
-              <ListItemText primary="Create Department" />
-            </ListItemButton>
-            <ListItemButton
-              sx={{ pl: 4 }}
-              selected={location.pathname === '/departments/list'}
-              onClick={() => handleNavigation('/departments/list')}
-            >
-              <ListItemIcon>
-                <ListIcon />
-              </ListItemIcon>
-              <ListItemText primary="List Department" />
-            </ListItemButton>
-          </List>
-        </Collapse>
+        {shouldShowMenu('DEPARTMENT') && (
+          <>
+            <ListItem disablePadding>
+              <ListItemButton onClick={handleDepartmentClick}>
+                <ListItemIcon>
+                  <BusinessIcon />
+                </ListItemIcon>
+                <ListItemText primary="Department" />
+                {departmentOpen ? <ExpandLess /> : <ExpandMore />}
+              </ListItemButton>
+            </ListItem>
+            <Collapse in={departmentOpen} timeout="auto" unmountOnExit>
+              <List component="div" disablePadding>
+                <ListItemButton
+                  sx={{ pl: 4 }}
+                  selected={location.pathname === '/departments/create'}
+                  onClick={() => handleNavigation('/departments/create')}
+                >
+                  <ListItemIcon>
+                    <AddIcon />
+                  </ListItemIcon>
+                  <ListItemText primary="Create Department" />
+                </ListItemButton>
+                <ListItemButton
+                  sx={{ pl: 4 }}
+                  selected={location.pathname === '/departments/list'}
+                  onClick={() => handleNavigation('/departments/list')}
+                >
+                  <ListItemIcon>
+                    <ListIcon />
+                  </ListItemIcon>
+                  <ListItemText primary="List Department" />
+                </ListItemButton>
+              </List>
+            </Collapse>
+          </>
+        )}
 
         {/* Users Menu */}
-        <ListItem disablePadding>
-          <ListItemButton onClick={handleUsersClick}>
-            <ListItemIcon>
-              <PersonAddIcon />
-            </ListItemIcon>
-            <ListItemText primary="Users" />
-            {usersOpen ? <ExpandLess /> : <ExpandMore />}
-          </ListItemButton>
-        </ListItem>
-        <Collapse in={usersOpen} timeout="auto" unmountOnExit>
-          <List component="div" disablePadding>
-            <ListItemButton
-              sx={{ pl: 4 }}
-              selected={location.pathname === '/users/create'}
-              onClick={() => handleNavigation('/users/create')}
-            >
-              <ListItemIcon>
-                <AddIcon />
-              </ListItemIcon>
-              <ListItemText primary="Create User" />
-            </ListItemButton>
-            <ListItemButton
-              sx={{ pl: 4 }}
-              selected={location.pathname === '/users/list'}
-              onClick={() => handleNavigation('/users/list')}
-            >
-              <ListItemIcon>
-                <ListIcon />
-              </ListItemIcon>
-              <ListItemText primary="List Users" />
-            </ListItemButton>
-          </List>
-        </Collapse>
+        {shouldShowMenu('USER') && (
+          <>
+            <ListItem disablePadding>
+              <ListItemButton onClick={handleUsersClick}>
+                <ListItemIcon>
+                  <PersonAddIcon />
+                </ListItemIcon>
+                <ListItemText primary="Users" />
+                {usersOpen ? <ExpandLess /> : <ExpandMore />}
+              </ListItemButton>
+            </ListItem>
+            <Collapse in={usersOpen} timeout="auto" unmountOnExit>
+              <List component="div" disablePadding>
+                <ListItemButton
+                  sx={{ pl: 4 }}
+                  selected={location.pathname === '/users/create'}
+                  onClick={() => handleNavigation('/users/create')}
+                >
+                  <ListItemIcon>
+                    <AddIcon />
+                  </ListItemIcon>
+                  <ListItemText primary="Create User" />
+                </ListItemButton>
+                <ListItemButton
+                  sx={{ pl: 4 }}
+                  selected={location.pathname === '/users/list'}
+                  onClick={() => handleNavigation('/users/list')}
+                >
+                  <ListItemIcon>
+                    <ListIcon />
+                  </ListItemIcon>
+                  <ListItemText primary="List Users" />
+                </ListItemButton>
+              </List>
+            </Collapse>
+          </>
+        )}
 
         {/* Customer Menu */}
-        <ListItem disablePadding>
-          <ListItemButton onClick={() => setCustomerOpen(!customerOpen)}>
-            <ListItemIcon>
-              <PeopleIcon />
-            </ListItemIcon>
-            <ListItemText primary="Customer" />
-            {customerOpen ? <ExpandLess /> : <ExpandMore />}
-          </ListItemButton>
-        </ListItem>
-        <Collapse in={customerOpen} timeout="auto" unmountOnExit>
-          <List component="div" disablePadding>
-            <ListItemButton
-              sx={{ pl: 4 }}
-              selected={location.pathname === '/customers/create'}
-              onClick={() => handleNavigation('/customers/create')}
-            >
-              <ListItemIcon>
-                <AddIcon />
-              </ListItemIcon>
-              <ListItemText primary="Create Customer" />
-            </ListItemButton>
-            <ListItemButton
-              sx={{ pl: 4 }}
-              selected={location.pathname === '/customers/list'}
-              onClick={() => handleNavigation('/customers/list')}
-            >
-              <ListItemIcon>
-                <ListIcon />
-              </ListItemIcon>
-              <ListItemText primary="List Customer" />
-            </ListItemButton>
-          </List>
-        </Collapse>
+        {shouldShowMenu('CUSTOMER') && (
+          <>
+            <ListItem disablePadding>
+              <ListItemButton onClick={() => setCustomerOpen(!customerOpen)}>
+                <ListItemIcon>
+                  <PeopleIcon />
+                </ListItemIcon>
+                <ListItemText primary="Customer" />
+                {customerOpen ? <ExpandLess /> : <ExpandMore />}
+              </ListItemButton>
+            </ListItem>
+            <Collapse in={customerOpen} timeout="auto" unmountOnExit>
+              <List component="div" disablePadding>
+                <ListItemButton
+                  sx={{ pl: 4 }}
+                  selected={location.pathname === '/customers/create'}
+                  onClick={() => handleNavigation('/customers/create')}
+                >
+                  <ListItemIcon>
+                    <AddIcon />
+                  </ListItemIcon>
+                  <ListItemText primary="Create Customer" />
+                </ListItemButton>
+                <ListItemButton
+                  sx={{ pl: 4 }}
+                  selected={location.pathname === '/customers/list'}
+                  onClick={() => handleNavigation('/customers/list')}
+                >
+                  <ListItemIcon>
+                    <ListIcon />
+                  </ListItemIcon>
+                  <ListItemText primary="List Customer" />
+                </ListItemButton>
+              </List>
+            </Collapse>
+          </>
+        )}
 
         {/* Raw Material Menu */}
-        <ListItem disablePadding>
-          <ListItemButton onClick={handleRawMaterialClick}>
-            <ListItemIcon>
-              <InventoryIcon />
-            </ListItemIcon>
-            <ListItemText primary="Raw Material" />
-            {rawMaterialOpen ? <ExpandLess /> : <ExpandMore />}
-          </ListItemButton>
-        </ListItem>
-        <Collapse in={rawMaterialOpen} timeout="auto" unmountOnExit>
-          <List component="div" disablePadding>
-            <ListItemButton
-              sx={{ pl: 4 }}
-              selected={location.pathname === '/raw-materials/create'}
-              onClick={() => handleNavigation('/raw-materials/create')}
-            >
-              <ListItemIcon>
-                <AddIcon />
-              </ListItemIcon>
-              <ListItemText primary="Create Raw Material" />
-            </ListItemButton>
-            <ListItemButton
-              sx={{ pl: 4 }}
-              selected={location.pathname === '/raw-materials/list'}
-              onClick={() => handleNavigation('/raw-materials/list')}
-            >
-              <ListItemIcon>
-                <ListIcon />
-              </ListItemIcon>
-              <ListItemText primary="List Raw Material" />
-            </ListItemButton>
-          </List>
-        </Collapse>
+        {shouldShowMenu('RAW_MATERIAL') && (
+          <>
+            <ListItem disablePadding>
+              <ListItemButton onClick={handleRawMaterialClick}>
+                <ListItemIcon>
+                  <InventoryIcon />
+                </ListItemIcon>
+                <ListItemText primary="Raw Material" />
+                {rawMaterialOpen ? <ExpandLess /> : <ExpandMore />}
+              </ListItemButton>
+            </ListItem>
+            <Collapse in={rawMaterialOpen} timeout="auto" unmountOnExit>
+              <List component="div" disablePadding>
+                <ListItemButton
+                  sx={{ pl: 4 }}
+                  selected={location.pathname === '/raw-materials/create'}
+                  onClick={() => handleNavigation('/raw-materials/create')}
+                >
+                  <ListItemIcon>
+                    <AddIcon />
+                  </ListItemIcon>
+                  <ListItemText primary="Create Raw Material" />
+                </ListItemButton>
+                <ListItemButton
+                  sx={{ pl: 4 }}
+                  selected={location.pathname === '/raw-materials/list'}
+                  onClick={() => handleNavigation('/raw-materials/list')}
+                >
+                  <ListItemIcon>
+                    <ListIcon />
+                  </ListItemIcon>
+                  <ListItemText primary="List Raw Material" />
+                </ListItemButton>
+              </List>
+            </Collapse>
+          </>
+        )}
 
         {/* Ready Item Menu */}
-        <ListItem disablePadding>
-          <ListItemButton onClick={handleReadyItemClick}>
-            <ListItemIcon>
-              <ShoppingCartIcon />
-            </ListItemIcon>
-            <ListItemText primary="Ready Item" />
-            {readyItemOpen ? <ExpandLess /> : <ExpandMore />}
-          </ListItemButton>
-        </ListItem>
-        <Collapse in={readyItemOpen} timeout="auto" unmountOnExit>
-          <List component="div" disablePadding>
-            <ListItemButton
-              sx={{ pl: 4 }}
-              selected={location.pathname === '/ready-items/create'}
-              onClick={() => handleNavigation('/ready-items/create')}
-            >
-              <ListItemIcon>
-                <AddIcon />
-              </ListItemIcon>
-              <ListItemText primary="Create Ready Item" />
-            </ListItemButton>
-            <ListItemButton
-              sx={{ pl: 4 }}
-              selected={location.pathname === '/ready-items/list'}
-              onClick={() => handleNavigation('/ready-items/list')}
-            >
-              <ListItemIcon>
-                <ListIcon />
-              </ListItemIcon>
-              <ListItemText primary="List Ready Item" />
-            </ListItemButton>
-          </List>
-        </Collapse>
+        {shouldShowMenu('READY_ITEM') && (
+          <>
+            <ListItem disablePadding>
+              <ListItemButton onClick={handleReadyItemClick}>
+                <ListItemIcon>
+                  <ShoppingCartIcon />
+                </ListItemIcon>
+                <ListItemText primary="Ready Item" />
+                {readyItemOpen ? <ExpandLess /> : <ExpandMore />}
+              </ListItemButton>
+            </ListItem>
+            <Collapse in={readyItemOpen} timeout="auto" unmountOnExit>
+              <List component="div" disablePadding>
+                <ListItemButton
+                  sx={{ pl: 4 }}
+                  selected={location.pathname === '/ready-items/create'}
+                  onClick={() => handleNavigation('/ready-items/create')}
+                >
+                  <ListItemIcon>
+                    <AddIcon />
+                  </ListItemIcon>
+                  <ListItemText primary="Create Ready Item" />
+                </ListItemButton>
+                <ListItemButton
+                  sx={{ pl: 4 }}
+                  selected={location.pathname === '/ready-items/list'}
+                  onClick={() => handleNavigation('/ready-items/list')}
+                >
+                  <ListItemIcon>
+                    <ListIcon />
+                  </ListItemIcon>
+                  <ListItemText primary="List Ready Item" />
+                </ListItemButton>
+              </List>
+            </Collapse>
+          </>
+        )}
 
         {/* Sales Order Menu */}
-        <ListItem disablePadding>
-          <ListItemButton onClick={handleSalesOrderClick}>
-            <ListItemIcon>
-              <PointOfSaleIcon />
-            </ListItemIcon>
-            <ListItemText primary="Sales Order" />
-            {salesOrderOpen ? <ExpandLess /> : <ExpandMore />}
-          </ListItemButton>
-        </ListItem>
-        <Collapse in={salesOrderOpen} timeout="auto" unmountOnExit>
-          <List component="div" disablePadding>
-            <ListItemButton
-              sx={{ pl: 4 }}
-              selected={location.pathname === '/sales-orders/create'}
-              onClick={() => handleNavigation('/sales-orders/create')}
-            >
-              <ListItemIcon>
-                <AddIcon />
-              </ListItemIcon>
-              <ListItemText primary="Create Sales Order" />
-            </ListItemButton>
-            <ListItemButton
-              sx={{ pl: 4 }}
-              selected={location.pathname === '/sales-orders/list'}
-              onClick={() => handleNavigation('/sales-orders/list')}
-            >
-              <ListItemIcon>
-                <ListIcon />
-              </ListItemIcon>
-              <ListItemText primary="List Sales Order" />
-            </ListItemButton>
-          </List>
-        </Collapse>
+        {shouldShowMenu('SALES_ORDER') && (
+          <>
+            <ListItem disablePadding>
+              <ListItemButton onClick={handleSalesOrderClick}>
+                <ListItemIcon>
+                  <PointOfSaleIcon />
+                </ListItemIcon>
+                <ListItemText primary="Sales Order" />
+                {salesOrderOpen ? <ExpandLess /> : <ExpandMore />}
+              </ListItemButton>
+            </ListItem>
+            <Collapse in={salesOrderOpen} timeout="auto" unmountOnExit>
+              <List component="div" disablePadding>
+                <ListItemButton
+                  sx={{ pl: 4 }}
+                  selected={location.pathname === '/sales-orders/create'}
+                  onClick={() => handleNavigation('/sales-orders/create')}
+                >
+                  <ListItemIcon>
+                    <AddIcon />
+                  </ListItemIcon>
+                  <ListItemText primary="Create Sales Order" />
+                </ListItemButton>
+                <ListItemButton
+                  sx={{ pl: 4 }}
+                  selected={location.pathname === '/sales-orders/list'}
+                  onClick={() => handleNavigation('/sales-orders/list')}
+                >
+                  <ListItemIcon>
+                    <ListIcon />
+                  </ListItemIcon>
+                  <ListItemText primary="List Sales Order" />
+                </ListItemButton>
+              </List>
+            </Collapse>
+          </>
+        )}
 
         {/* Purchase Order Menu */}
-        <ListItem disablePadding>
-          <ListItemButton onClick={handlePurchaseOrderClick}>
-            <ListItemIcon>
-              <ShoppingBagIcon />
-            </ListItemIcon>
-            <ListItemText primary="Purchase Order" />
-            {purchaseOrderOpen ? <ExpandLess /> : <ExpandMore />}
-          </ListItemButton>
-        </ListItem>
-        <Collapse in={purchaseOrderOpen} timeout="auto" unmountOnExit>
-          <List component="div" disablePadding>
-            <ListItemButton
-              sx={{ pl: 4 }}
-              selected={location.pathname === '/purchase-orders/create'}
-              onClick={() => handleNavigation('/purchase-orders/create')}
-            >
-              <ListItemIcon>
-                <AddIcon />
-              </ListItemIcon>
-              <ListItemText primary="Create Purchase Order" />
-            </ListItemButton>
-            <ListItemButton
-              sx={{ pl: 4 }}
-              selected={location.pathname === '/purchase-orders/list'}
-              onClick={() => handleNavigation('/purchase-orders/list')}
-            >
-              <ListItemIcon>
-                <ListIcon />
-              </ListItemIcon>
-              <ListItemText primary="List Purchase Order" />
-            </ListItemButton>
-          </List>
-        </Collapse>
+        {shouldShowMenu('PURCHASE_ORDER') && (
+          <>
+            <ListItem disablePadding>
+              <ListItemButton onClick={handlePurchaseOrderClick}>
+                <ListItemIcon>
+                  <ShoppingBagIcon />
+                </ListItemIcon>
+                <ListItemText primary="Purchase Order" />
+                {purchaseOrderOpen ? <ExpandLess /> : <ExpandMore />}
+              </ListItemButton>
+            </ListItem>
+            <Collapse in={purchaseOrderOpen} timeout="auto" unmountOnExit>
+              <List component="div" disablePadding>
+                <ListItemButton
+                  sx={{ pl: 4 }}
+                  selected={location.pathname === '/purchase-orders/create'}
+                  onClick={() => handleNavigation('/purchase-orders/create')}
+                >
+                  <ListItemIcon>
+                    <AddIcon />
+                  </ListItemIcon>
+                  <ListItemText primary="Create Purchase Order" />
+                </ListItemButton>
+                <ListItemButton
+                  sx={{ pl: 4 }}
+                  selected={location.pathname === '/purchase-orders/list'}
+                  onClick={() => handleNavigation('/purchase-orders/list')}
+                >
+                  <ListItemIcon>
+                    <ListIcon />
+                  </ListItemIcon>
+                  <ListItemText primary="List Purchase Order" />
+                </ListItemButton>
+              </List>
+            </Collapse>
+          </>
+        )}
 
         {/* Production Menu */}
-        <ListItem disablePadding>
-          <ListItemButton onClick={handleProductionClick}>
-            <ListItemIcon>
-              <FactoryIcon />
-            </ListItemIcon>
-            <ListItemText primary="Production" />
-            {productionOpen ? <ExpandLess /> : <ExpandMore />}
-          </ListItemButton>
-        </ListItem>
-        <Collapse in={productionOpen} timeout="auto" unmountOnExit>
-          <List component="div" disablePadding>
-            <ListItemButton
-              sx={{ pl: 4 }}
-              selected={location.pathname === '/productions/create'}
-              onClick={() => handleNavigation('/productions/create')}
-            >
-              <ListItemIcon>
-                <AddIcon />
-              </ListItemIcon>
-              <ListItemText primary="Create Production" />
-            </ListItemButton>
-            <ListItemButton
-              sx={{ pl: 4 }}
-              selected={location.pathname === '/productions/list'}
-              onClick={() => handleNavigation('/productions/list')}
-            >
-              <ListItemIcon>
-                <ListIcon />
-              </ListItemIcon>
-              <ListItemText primary="List Production" />
-            </ListItemButton>
-          </List>
-        </Collapse>
+        {shouldShowMenu('PRODUCTION') && (
+          <>
+            <ListItem disablePadding>
+              <ListItemButton onClick={handleProductionClick}>
+                <ListItemIcon>
+                  <FactoryIcon />
+                </ListItemIcon>
+                <ListItemText primary="Production" />
+                {productionOpen ? <ExpandLess /> : <ExpandMore />}
+              </ListItemButton>
+            </ListItem>
+            <Collapse in={productionOpen} timeout="auto" unmountOnExit>
+              <List component="div" disablePadding>
+                <ListItemButton
+                  sx={{ pl: 4 }}
+                  selected={location.pathname === '/productions/create'}
+                  onClick={() => handleNavigation('/productions/create')}
+                >
+                  <ListItemIcon>
+                    <AddIcon />
+                  </ListItemIcon>
+                  <ListItemText primary="Create Production" />
+                </ListItemButton>
+                <ListItemButton
+                  sx={{ pl: 4 }}
+                  selected={location.pathname === '/productions/list'}
+                  onClick={() => handleNavigation('/productions/list')}
+                >
+                  <ListItemIcon>
+                    <ListIcon />
+                  </ListItemIcon>
+                  <ListItemText primary="List Production" />
+                </ListItemButton>
+              </List>
+            </Collapse>
+          </>
+        )}
 
         {/* Material Consumption Menu */}
-        <ListItem disablePadding>
-          <ListItemButton onClick={handleMaterialConsumptionClick}>
-            <ListItemIcon>
-              <ScienceIcon />
-            </ListItemIcon>
-            <ListItemText primary="Material Consumption" />
-            {materialConsumptionOpen ? <ExpandLess /> : <ExpandMore />}
-          </ListItemButton>
-        </ListItem>
-        <Collapse in={materialConsumptionOpen} timeout="auto" unmountOnExit>
-          <List component="div" disablePadding>
-            <ListItemButton
-              sx={{ pl: 4 }}
-              selected={location.pathname === '/material-consumptions/create'}
-              onClick={() => handleNavigation('/material-consumptions/create')}
-            >
-              <ListItemIcon>
-                <AddIcon />
-              </ListItemIcon>
-              <ListItemText primary="Create Material Consumption" />
-            </ListItemButton>
-            <ListItemButton
-              sx={{ pl: 4 }}
-              selected={location.pathname === '/material-consumptions/list'}
-              onClick={() => handleNavigation('/material-consumptions/list')}
-            >
-              <ListItemIcon>
-                <ListIcon />
-              </ListItemIcon>
-              <ListItemText primary="List Material Consumption" />
-            </ListItemButton>
-          </List>
-        </Collapse>
+        {shouldShowMenu('MATERIAL_CONSUMPTION') && (
+          <>
+            <ListItem disablePadding>
+              <ListItemButton onClick={handleMaterialConsumptionClick}>
+                <ListItemIcon>
+                  <ScienceIcon />
+                </ListItemIcon>
+                <ListItemText primary="Material Consumption" />
+                {materialConsumptionOpen ? <ExpandLess /> : <ExpandMore />}
+              </ListItemButton>
+            </ListItem>
+            <Collapse in={materialConsumptionOpen} timeout="auto" unmountOnExit>
+              <List component="div" disablePadding>
+                <ListItemButton
+                  sx={{ pl: 4 }}
+                  selected={location.pathname === '/material-consumptions/create'}
+                  onClick={() => handleNavigation('/material-consumptions/create')}
+                >
+                  <ListItemIcon>
+                    <AddIcon />
+                  </ListItemIcon>
+                  <ListItemText primary="Create Material Consumption" />
+                </ListItemButton>
+                <ListItemButton
+                  sx={{ pl: 4 }}
+                  selected={location.pathname === '/material-consumptions/list'}
+                  onClick={() => handleNavigation('/material-consumptions/list')}
+                >
+                  <ListItemIcon>
+                    <ListIcon />
+                  </ListItemIcon>
+                  <ListItemText primary="List Material Consumption" />
+                </ListItemButton>
+              </List>
+            </Collapse>
+          </>
+        )}
 
         {/* Production Recipe Menu */}
-        <ListItem disablePadding>
-          <ListItemButton onClick={handleProductionRecipeClick}>
-            <ListItemIcon>
-              <MenuBookIcon />
-            </ListItemIcon>
-            <ListItemText primary="Production Recipe" />
-            {productionRecipeOpen ? <ExpandLess /> : <ExpandMore />}
-          </ListItemButton>
-        </ListItem>
-        <Collapse in={productionRecipeOpen} timeout="auto" unmountOnExit>
-          <List component="div" disablePadding>
-            <ListItemButton
-              sx={{ pl: 4 }}
-              selected={location.pathname === '/production-recipes/create'}
-              onClick={() => handleNavigation('/production-recipes/create')}
-            >
-              <ListItemIcon>
-                <AddIcon />
-              </ListItemIcon>
-              <ListItemText primary="Create Production Recipe" />
-            </ListItemButton>
-            <ListItemButton
-              sx={{ pl: 4 }}
-              selected={location.pathname === '/production-recipes/list'}
-              onClick={() => handleNavigation('/production-recipes/list')}
-            >
-              <ListItemIcon>
-                <ListIcon />
-              </ListItemIcon>
-              <ListItemText primary="List Production Recipe" />
-            </ListItemButton>
-          </List>
-        </Collapse>
+        {shouldShowMenu('PRODUCTION_RECIPE') && (
+          <>
+            <ListItem disablePadding>
+              <ListItemButton onClick={handleProductionRecipeClick}>
+                <ListItemIcon>
+                  <MenuBookIcon />
+                </ListItemIcon>
+                <ListItemText primary="Production Recipe" />
+                {productionRecipeOpen ? <ExpandLess /> : <ExpandMore />}
+              </ListItemButton>
+            </ListItem>
+            <Collapse in={productionRecipeOpen} timeout="auto" unmountOnExit>
+              <List component="div" disablePadding>
+                <ListItemButton
+                  sx={{ pl: 4 }}
+                  selected={location.pathname === '/production-recipes/create'}
+                  onClick={() => handleNavigation('/production-recipes/create')}
+                >
+                  <ListItemIcon>
+                    <AddIcon />
+                  </ListItemIcon>
+                  <ListItemText primary="Create Production Recipe" />
+                </ListItemButton>
+                <ListItemButton
+                  sx={{ pl: 4 }}
+                  selected={location.pathname === '/production-recipes/list'}
+                  onClick={() => handleNavigation('/production-recipes/list')}
+                >
+                  <ListItemIcon>
+                    <ListIcon />
+                  </ListItemIcon>
+                  <ListItemText primary="List Production Recipe" />
+                </ListItemButton>
+              </List>
+            </Collapse>
+          </>
+        )}
 
         {/* Proposition Menu */}
-        <ListItem disablePadding>
-          <ListItemButton onClick={handlePropositionClick}>
-            <ListItemIcon>
-              <TrendingUpIcon />
-            </ListItemIcon>
-            <ListItemText primary="Proposition" />
-            {propositionOpen ? <ExpandLess /> : <ExpandMore />}
-          </ListItemButton>
-        </ListItem>
-        <Collapse in={propositionOpen} timeout="auto" unmountOnExit>
-          <List component="div" disablePadding>
-            <ListItemButton
-              sx={{ pl: 4 }}
-              selected={location.pathname === '/propositions/create'}
-              onClick={() => handleNavigation('/propositions/create')}
-            >
-              <ListItemIcon>
-                <AddIcon />
-              </ListItemIcon>
-              <ListItemText primary="Create Proposition" />
-            </ListItemButton>
-            <ListItemButton
-              sx={{ pl: 4 }}
-              selected={location.pathname === '/propositions/list'}
-              onClick={() => handleNavigation('/propositions/list')}
-            >
-              <ListItemIcon>
-                <ListIcon />
-              </ListItemIcon>
-              <ListItemText primary="List Proposition" />
-            </ListItemButton>
-          </List>
-        </Collapse>
+        {shouldShowMenu('PROPOSITION') && (
+          <>
+            <ListItem disablePadding>
+              <ListItemButton onClick={handlePropositionClick}>
+                <ListItemIcon>
+                  <TrendingUpIcon />
+                </ListItemIcon>
+                <ListItemText primary="Proposition" />
+                {propositionOpen ? <ExpandLess /> : <ExpandMore />}
+              </ListItemButton>
+            </ListItem>
+            <Collapse in={propositionOpen} timeout="auto" unmountOnExit>
+              <List component="div" disablePadding>
+                <ListItemButton
+                  sx={{ pl: 4 }}
+                  selected={location.pathname === '/propositions/create'}
+                  onClick={() => handleNavigation('/propositions/create')}
+                >
+                  <ListItemIcon>
+                    <AddIcon />
+                  </ListItemIcon>
+                  <ListItemText primary="Create Proposition" />
+                </ListItemButton>
+                <ListItemButton
+                  sx={{ pl: 4 }}
+                  selected={location.pathname === '/propositions/list'}
+                  onClick={() => handleNavigation('/propositions/list')}
+                >
+                  <ListItemIcon>
+                    <ListIcon />
+                  </ListItemIcon>
+                  <ListItemText primary="List Proposition" />
+                </ListItemButton>
+              </List>
+            </Collapse>
+          </>
+        )}
 
         {/* Stock Menu */}
-        <ListItem disablePadding>
-          <ListItemButton onClick={handleStockClick}>
-            <ListItemIcon>
-              <Inventory2Icon />
-            </ListItemIcon>
-            <ListItemText primary="Stock" />
-            {stockOpen ? <ExpandLess /> : <ExpandMore />}
-          </ListItemButton>
-        </ListItem>
-        <Collapse in={stockOpen} timeout="auto" unmountOnExit>
-          <List component="div" disablePadding>
-            <ListItemButton
-              sx={{ pl: 4 }}
-              selected={location.pathname === '/stock/raw-material'}
-              onClick={() => handleNavigation('/stock/raw-material')}
-            >
-              <ListItemIcon>
-                <InventoryIcon />
-              </ListItemIcon>
-              <ListItemText primary="Raw Material Stock" />
-            </ListItemButton>
-            <ListItemButton
-              sx={{ pl: 4 }}
-              selected={location.pathname === '/stock/ready-item'}
-              onClick={() => handleNavigation('/stock/ready-item')}
-            >
-              <ListItemIcon>
-                <ShoppingCartIcon />
-              </ListItemIcon>
-              <ListItemText primary="Ready Item Stock" />
-            </ListItemButton>
-          </List>
-        </Collapse>
+        {shouldShowMenu('STOCK') && (
+          <>
+            <ListItem disablePadding>
+              <ListItemButton onClick={handleStockClick}>
+                <ListItemIcon>
+                  <Inventory2Icon />
+                </ListItemIcon>
+                <ListItemText primary="Stock" />
+                {stockOpen ? <ExpandLess /> : <ExpandMore />}
+              </ListItemButton>
+            </ListItem>
+            <Collapse in={stockOpen} timeout="auto" unmountOnExit>
+              <List component="div" disablePadding>
+                <ListItemButton
+                  sx={{ pl: 4 }}
+                  selected={location.pathname === '/stock/raw-material'}
+                  onClick={() => handleNavigation('/stock/raw-material')}
+                >
+                  <ListItemIcon>
+                    <InventoryIcon />
+                  </ListItemIcon>
+                  <ListItemText primary="Raw Material Stock" />
+                </ListItemButton>
+                <ListItemButton
+                  sx={{ pl: 4 }}
+                  selected={location.pathname === '/stock/ready-item'}
+                  onClick={() => handleNavigation('/stock/ready-item')}
+                >
+                  <ListItemIcon>
+                    <ShoppingCartIcon />
+                  </ListItemIcon>
+                  <ListItemText primary="Ready Item Stock" />
+                </ListItemButton>
+              </List>
+            </Collapse>
+          </>
+        )}
 
         {/* Payment Menu */}
-        <ListItem disablePadding>
-          <ListItemButton onClick={handlePaymentClick}>
-            <ListItemIcon>
-              <PaymentIcon />
-            </ListItemIcon>
-            <ListItemText primary="Payment" />
-            {paymentOpen ? <ExpandLess /> : <ExpandMore />}
-          </ListItemButton>
-        </ListItem>
-        <Collapse in={paymentOpen} timeout="auto" unmountOnExit>
-          <List component="div" disablePadding>
-            <ListItemButton
-              sx={{ pl: 4 }}
-              selected={location.pathname === '/payments/create'}
-              onClick={() => handleNavigation('/payments/create')}
-            >
-              <ListItemIcon>
-                <AddIcon />
-              </ListItemIcon>
-              <ListItemText primary="Create Payment" />
-            </ListItemButton>
-            <ListItemButton
-              sx={{ pl: 4 }}
-              selected={location.pathname === '/payments/list'}
-              onClick={() => handleNavigation('/payments/list')}
-            >
-              <ListItemIcon>
-                <ListIcon />
-              </ListItemIcon>
-              <ListItemText primary="List Payment" />
-            </ListItemButton>
-          </List>
-        </Collapse>
+        {shouldShowMenu('PAYMENT') && (
+          <>
+            <ListItem disablePadding>
+              <ListItemButton onClick={handlePaymentClick}>
+                <ListItemIcon>
+                  <PaymentIcon />
+                </ListItemIcon>
+                <ListItemText primary="Payment" />
+                {paymentOpen ? <ExpandLess /> : <ExpandMore />}
+              </ListItemButton>
+            </ListItem>
+            <Collapse in={paymentOpen} timeout="auto" unmountOnExit>
+              <List component="div" disablePadding>
+                <ListItemButton
+                  sx={{ pl: 4 }}
+                  selected={location.pathname === '/payments/create'}
+                  onClick={() => handleNavigation('/payments/create')}
+                >
+                  <ListItemIcon>
+                    <AddIcon />
+                  </ListItemIcon>
+                  <ListItemText primary="Create Payment" />
+                </ListItemButton>
+                <ListItemButton
+                  sx={{ pl: 4 }}
+                  selected={location.pathname === '/payments/list'}
+                  onClick={() => handleNavigation('/payments/list')}
+                >
+                  <ListItemIcon>
+                    <ListIcon />
+                  </ListItemIcon>
+                  <ListItemText primary="List Payment" />
+                </ListItemButton>
+              </List>
+            </Collapse>
+          </>
+        )}
 
         {/* Cashflow Menu */}
-        <ListItem disablePadding>
-          <ListItemButton onClick={handleCashflowClick}>
-            <ListItemIcon>
-              <AccountBalanceIcon />
-            </ListItemIcon>
-            <ListItemText primary="Cashflow" />
-            {cashflowOpen ? <ExpandLess /> : <ExpandMore />}
-          </ListItemButton>
-        </ListItem>
-        <Collapse in={cashflowOpen} timeout="auto" unmountOnExit>
-          <List component="div" disablePadding>
-            <ListItemButton
-              sx={{ pl: 4 }}
-              selected={location.pathname === '/cashflow/list'}
-              onClick={() => handleNavigation('/cashflow/list')}
-            >
-              <ListItemIcon>
-                <ListIcon />
-              </ListItemIcon>
-              <ListItemText primary="List Cashflow" />
-            </ListItemButton>
-            <ListItemButton
-              sx={{ pl: 4 }}
-              selected={location.pathname === '/cashflow/create'}
-              onClick={() => handleNavigation('/cashflow/create')}
-            >
-              <ListItemIcon>
-                <AddIcon />
-              </ListItemIcon>
-              <ListItemText primary="Create Cashflow Entry" />
-            </ListItemButton>
-          </List>
-        </Collapse>
+        {shouldShowMenu('CASHFLOW') && (
+          <>
+            <ListItem disablePadding>
+              <ListItemButton onClick={handleCashflowClick}>
+                <ListItemIcon>
+                  <AccountBalanceIcon />
+                </ListItemIcon>
+                <ListItemText primary="Cashflow" />
+                {cashflowOpen ? <ExpandLess /> : <ExpandMore />}
+              </ListItemButton>
+            </ListItem>
+            <Collapse in={cashflowOpen} timeout="auto" unmountOnExit>
+              <List component="div" disablePadding>
+                <ListItemButton
+                  sx={{ pl: 4 }}
+                  selected={location.pathname === '/cashflow/list'}
+                  onClick={() => handleNavigation('/cashflow/list')}
+                >
+                  <ListItemIcon>
+                    <ListIcon />
+                  </ListItemIcon>
+                  <ListItemText primary="List Cashflow" />
+                </ListItemButton>
+                <ListItemButton
+                  sx={{ pl: 4 }}
+                  selected={location.pathname === '/cashflow/create'}
+                  onClick={() => handleNavigation('/cashflow/create')}
+                >
+                  <ListItemIcon>
+                    <AddIcon />
+                  </ListItemIcon>
+                  <ListItemText primary="Create Cashflow Entry" />
+                </ListItemButton>
+              </List>
+            </Collapse>
+          </>
+        )}
 
         {/* Customer Account Menu */}
-        <ListItem disablePadding>
-          <ListItemButton onClick={handleCustomerAccountClick}>
-            <ListItemIcon>
-              <AccountCircleIcon />
-            </ListItemIcon>
-            <ListItemText primary="Customer Account" />
-            {customerAccountOpen ? <ExpandLess /> : <ExpandMore />}
-          </ListItemButton>
-        </ListItem>
-        <Collapse in={customerAccountOpen} timeout="auto" unmountOnExit>
-          <List component="div" disablePadding>
-            <ListItemButton
-              sx={{ pl: 4 }}
-              selected={location.pathname === '/customer-accounts/view'}
-              onClick={() => handleNavigation('/customer-accounts/view')}
-            >
-              <ListItemIcon>
-                <AccountCircleIcon />
-              </ListItemIcon>
-              <ListItemText primary="View Customer Account" />
-            </ListItemButton>
-            <ListItemButton
-              sx={{ pl: 4 }}
-              selected={location.pathname === '/customer-accounts/statement'}
-              onClick={() => handleNavigation('/customer-accounts/statement')}
-            >
-              <ListItemIcon>
-                <ReceiptIcon />
-              </ListItemIcon>
-              <ListItemText primary="Customer Account Statement" />
-            </ListItemButton>
-          </List>
-        </Collapse>
+        {shouldShowMenu('CUSTOMER_ACCOUNT') && (
+          <>
+            <ListItem disablePadding>
+              <ListItemButton onClick={handleCustomerAccountClick}>
+                <ListItemIcon>
+                  <AccountCircleIcon />
+                </ListItemIcon>
+                <ListItemText primary="Customer Account" />
+                {customerAccountOpen ? <ExpandLess /> : <ExpandMore />}
+              </ListItemButton>
+            </ListItem>
+            <Collapse in={customerAccountOpen} timeout="auto" unmountOnExit>
+              <List component="div" disablePadding>
+                <ListItemButton
+                  sx={{ pl: 4 }}
+                  selected={location.pathname === '/customer-accounts/view'}
+                  onClick={() => handleNavigation('/customer-accounts/view')}
+                >
+                  <ListItemIcon>
+                    <AccountCircleIcon />
+                  </ListItemIcon>
+                  <ListItemText primary="View Customer Account" />
+                </ListItemButton>
+                <ListItemButton
+                  sx={{ pl: 4 }}
+                  selected={location.pathname === '/customer-accounts/statement'}
+                  onClick={() => handleNavigation('/customer-accounts/statement')}
+                >
+                  <ListItemIcon>
+                    <ReceiptIcon />
+                  </ListItemIcon>
+                  <ListItemText primary="Customer Account Statement" />
+                </ListItemButton>
+              </List>
+            </Collapse>
+          </>
+        )}
       </List>
     </div>
   );
