@@ -61,6 +61,8 @@ const CreateSalesOrder = () => {
     paidAmount: 0,
     balancePayment: 0,
     paymentStatus: 'PENDING',
+    gst: 0,
+    gstAmount: 0,
     remarks: '',
   });
 
@@ -97,17 +99,23 @@ const CreateSalesOrder = () => {
     fetchGoodsTypes();
   }, []);
 
-  // Calculate totalAmount when salesItems change
+  // Calculate totalAmount when salesItems or GST changes
   useEffect(() => {
-    const total = salesItems.reduce((sum, item) => {
+    const subtotal = salesItems.reduce((sum, item) => {
       return sum + (parseFloat(item.totalPrice) || 0);
     }, 0);
+    
+    const gstPercentage = parseFloat(formData.gst) || 0;
+    const gstAmount = (subtotal * gstPercentage) / 100;
+    const totalAmount = subtotal + gstAmount;
+    
     setFormData((prev) => ({
       ...prev,
-      totalAmount: total,
-      balancePayment: total - (parseFloat(prev.paidAmount) || 0),
+      gstAmount: gstAmount,
+      totalAmount: totalAmount,
+      balancePayment: totalAmount - (parseFloat(prev.paidAmount) || 0),
     }));
-  }, [salesItems, formData.paidAmount]);
+  }, [salesItems, formData.gst, formData.paidAmount]);
 
   // Fetch customers
   const fetchCustomers = async () => {
@@ -160,6 +168,7 @@ const CreateSalesOrder = () => {
       if (name === 'paidAmount') {
         updated.balancePayment = (parseFloat(prev.totalAmount) || 0) - (parseFloat(value) || 0);
       }
+      // GST change will trigger useEffect to recalculate totals
       return updated;
     });
 
@@ -267,9 +276,6 @@ const CreateSalesOrder = () => {
       if (item.rate === undefined || item.rate < 0) {
         newErrors[`item_${index}_rate`] = 'Rate is required';
       }
-      if (item.report === undefined || item.report < 0) {
-        newErrors[`item_${index}_report`] = 'Report is required';
-      }
     });
 
     setErrors(newErrors);
@@ -298,6 +304,8 @@ const CreateSalesOrder = () => {
         paidAmount: parseFloat(formData.paidAmount) || 0,
         balancePayment: parseFloat(formData.balancePayment) || 0,
         paymentStatus: formData.paymentStatus,
+        gst: parseFloat(formData.gst) || 0,
+        gstAmount: parseFloat(formData.gstAmount) || 0,
         remarks: formData.remarks || '',
         salesItems: salesItems.map((item) => ({
           id: item.id || 0,
@@ -344,6 +352,8 @@ const CreateSalesOrder = () => {
       paidAmount: 0,
       balancePayment: 0,
       paymentStatus: 'PENDING',
+      gst: 0,
+      gstAmount: 0,
       remarks: '',
     });
     setSalesItems([
@@ -489,15 +499,41 @@ const CreateSalesOrder = () => {
               </FormControl>
             </Grid>
 
+            {/* GST Percentage */}
+            <Grid item xs={12} sm={6} md={3}>
+              <TextField
+                fullWidth
+                label="GST (%)"
+                name="gst"
+                type="number"
+                value={formData.gst}
+                onChange={handleChange}
+                disabled={loading}
+                inputProps={{ min: 0, max: 100, step: 0.01 }}
+                helperText="GST percentage (default: 0)"
+              />
+            </Grid>
+
+            {/* GST Amount */}
+            <Grid item xs={12} sm={6} md={3}>
+              <TextField
+                fullWidth
+                label="GST Amount"
+                value={formData.gstAmount.toFixed(2)}
+                disabled
+                InputProps={{ readOnly: true }}
+              />
+            </Grid>
+
             {/* Total Amount */}
-            <Grid item xs={12} sm={6} md={4}>
+            <Grid item xs={12} sm={6} md={3}>
               <TextField
                 fullWidth label="Total Amount" value={formData.totalAmount.toFixed(2)} disabled InputProps={{ readOnly: true }}
               />
             </Grid>
 
             {/* Paid Amount */}
-            <Grid item xs={12} sm={6} md={4}>
+            <Grid item xs={12} sm={6} md={3}>
               <TextField
                 fullWidth
                 label="Paid Amount"
@@ -511,7 +547,7 @@ const CreateSalesOrder = () => {
             </Grid>
 
             {/* Balance Payment */}
-            <Grid item xs={12} sm={6} md={4}>
+            <Grid item xs={12} sm={6} md={3}>
               <TextField
                 fullWidth
                 label="Balance Payment"
@@ -714,8 +750,8 @@ const CreateSalesOrder = () => {
                             />
                           </Grid>
 
-                          {/* Rate & Report */}
-                          <Grid item xs={6}>
+                          {/* Rate */}
+                          <Grid item xs={12}>
                             <TextField
                               fullWidth
                               label="Rate"
@@ -724,19 +760,6 @@ const CreateSalesOrder = () => {
                               onChange={(e) => handleItemChange(index, 'rate', e.target.value)}
                               error={!!errors[`item_${index}_rate`]}
                               helperText={errors[`item_${index}_rate`]}
-                              disabled={loading}
-                              inputProps={{ min: 0, step: 0.01 }}
-                            />
-                          </Grid>
-                          <Grid item xs={6}>
-                            <TextField
-                              fullWidth
-                              label="Report"
-                              type="number"
-                              value={item.report}
-                              onChange={(e) => handleItemChange(index, 'report', e.target.value)}
-                              error={!!errors[`item_${index}_report`]}
-                              helperText={errors[`item_${index}_report`]}
                               disabled={loading}
                               inputProps={{ min: 0, step: 0.01 }}
                             />
@@ -777,7 +800,6 @@ const CreateSalesOrder = () => {
                         <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Unit Price</TableCell>
                         <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Total Price</TableCell>
                         <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Rate</TableCell>
-                        <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Report</TableCell>
                         <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Remarks</TableCell>
                         <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Action</TableCell>
                       </TableRow>
@@ -891,18 +913,6 @@ const CreateSalesOrder = () => {
                               value={item.rate}
                               onChange={(e) => handleItemChange(index, 'rate', e.target.value)}
                               error={!!errors[`item_${index}_rate`]}
-                              disabled={loading}
-                              inputProps={{ min: 0, step: 0.01 }}
-                              sx={{ width: 80 }}
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <TextField
-                              size="small"
-                              type="number"
-                              value={item.report}
-                              onChange={(e) => handleItemChange(index, 'report', e.target.value)}
-                              error={!!errors[`item_${index}_report`]}
                               disabled={loading}
                               inputProps={{ min: 0, step: 0.01 }}
                               sx={{ width: 80 }}

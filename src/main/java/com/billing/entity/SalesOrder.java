@@ -38,6 +38,12 @@ public class SalesOrder extends BaseModel {
     @Column(name = "payment_status", nullable = false)
     private String paymentStatus;
 
+    @Column(name = "gst", nullable = false)
+    private BigDecimal gst;
+
+    @Column(name = "gst_amount", nullable = false)
+    private BigDecimal gstAmount;
+
     private String remarks;
 
     @Column(name = "deleted_at")

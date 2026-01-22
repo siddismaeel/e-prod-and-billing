@@ -55,11 +55,21 @@ public class PurchaseOrderService {
         purchaseOrder.setOrderDate(dto.getOrderDate());
         purchaseOrder.setPaymentStatus(dto.getPaymentStatus());
         purchaseOrder.setRemarks(dto.getRemarks());
+        purchaseOrder.setGst(dto.getGst() != null ? dto.getGst() : BigDecimal.ZERO);
+        purchaseOrder.setGstAmount(dto.getGstAmount() != null ? dto.getGstAmount() : BigDecimal.ZERO);
 
-        // Calculate total amount from items
-        BigDecimal totalAmount = dto.getPurchaseItems().stream()
-                .map(PurchaseItemDTO::getTotalPrice)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        // Use totalAmount from DTO (which already includes GST if calculated on frontend)
+        // If not provided, calculate from items (for backward compatibility)
+        BigDecimal totalAmount = dto.getTotalAmount();
+        if (totalAmount == null) {
+            totalAmount = dto.getPurchaseItems().stream()
+                    .map(PurchaseItemDTO::getTotalPrice)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            // Add GST if not already included
+            if (dto.getGstAmount() != null) {
+                totalAmount = totalAmount.add(dto.getGstAmount());
+            }
+        }
 
         purchaseOrder.setTotalAmount(totalAmount);
         purchaseOrder.setPaidAmount(dto.getPaidAmount());
@@ -191,6 +201,8 @@ public class PurchaseOrderService {
         dto.setPaidAmount(order.getPaidAmount());
         dto.setBalancePayment(order.getBalancePayment());
         dto.setPaymentStatus(order.getPaymentStatus());
+        dto.setGst(order.getGst() != null ? order.getGst() : BigDecimal.ZERO);
+        dto.setGstAmount(order.getGstAmount() != null ? order.getGstAmount() : BigDecimal.ZERO);
         dto.setRemarks(order.getRemarks());
 
         List<PurchaseItemDTO> itemDtos = items.stream()

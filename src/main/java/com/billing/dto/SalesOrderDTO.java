@@ -41,6 +41,14 @@ public class SalesOrderDTO {
     @NotNull(message = "Payment status is required")
     private String paymentStatus;
 
+    @NotNull(message = "GST is required")
+    @PositiveOrZero(message = "GST must be positive or zero")
+    private BigDecimal gst;
+
+    @NotNull(message = "GST amount is required")
+    @PositiveOrZero(message = "GST amount must be positive or zero")
+    private BigDecimal gstAmount;
+
     private String remarks;
 
     @Valid
