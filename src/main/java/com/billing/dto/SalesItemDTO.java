@@ -21,11 +21,15 @@ public class SalesItemDTO {
     @NotNull(message = "Ready Item ID is required")
     private Long readyItemId;
 
+    private String readyItemName;
+
     @NotBlank(message = "Quality is required")
     private String quality;
 
     @NotNull(message = "Goods Type ID is required")
     private Long goodsTypeId;
+
+    private String goodsTypeName;
 
     @NotNull(message = "Quantity is required")
     @Min(value = 0, message = "Quantity must be positive or zero")

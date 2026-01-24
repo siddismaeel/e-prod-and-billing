@@ -117,7 +117,7 @@ public class SalesOrderService {
         SalesOrder salesOrder = salesOrderRepository.findByIdWithCustomer(id)
                 .orElseThrow(() -> new RuntimeException("Sales order not found with id: " + id));
 
-        List<SalesItem> salesItems = salesItemRepository.findBySalesOrderId(id);
+        List<SalesItem> salesItems = salesItemRepository.findBySalesOrderIdWithRelations(id);
         return convertToDTO(salesOrder, salesItems);
     }
 
@@ -228,8 +228,10 @@ public class SalesOrderService {
         dto.setId(item.getId());
         dto.setSalesOrderId(item.getSalesOrder().getId());
         dto.setReadyItemId(item.getReadyItem().getId());
+        dto.setReadyItemName(item.getReadyItem() != null ? item.getReadyItem().getName() : null);
         dto.setQuality(item.getQuality());
         dto.setGoodsTypeId(item.getGoodsType().getId());
+        dto.setGoodsTypeName(item.getGoodsType() != null ? item.getGoodsType().getName() : null);
         dto.setQuantity(item.getQuantity());
         dto.setUnitPrice(item.getUnitPrice());
         dto.setTotalPrice(item.getTotalPrice());

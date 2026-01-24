@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Container, Typography, Paper, Box, CircularProgress, Alert, TextField, InputAdornment, IconButton, Tooltip } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 import ReceiptIcon from '@mui/icons-material/Receipt';
@@ -6,9 +7,11 @@ import ListIcon from '@mui/icons-material/List';
 import SearchIcon from '@mui/icons-material/Search';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
+import VisibilityIcon from '@mui/icons-material/Visibility';
 import { getAllSalesOrders, deleteSalesOrder } from '../../services/salesOrderService';
 
 const ListSalesOrder = () => {
+  const navigate = useNavigate();
   const [salesOrders, setSalesOrders] = useState([]);
   const [filteredSalesOrders, setFilteredSalesOrders] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -103,14 +106,25 @@ const ListSalesOrder = () => {
     {
       field: 'actions',
       headerName: 'Actions',
-      width: 120,
+      width: 160,
       sortable: false,
       renderCell: (params) => (
-        <Tooltip title="Delete">
-          <IconButton size="small" onClick={() => handleDelete(params.row.id)} color="error">
-            <DeleteIcon fontSize="small" />
-          </IconButton>
-        </Tooltip>
+        <Box sx={{ display: 'flex', gap: 1 }}>
+          <Tooltip title="View">
+            <IconButton 
+              size="small" 
+              onClick={() => navigate(`/sales-orders/view/${params.row.id}`)} 
+              color="primary"
+            >
+              <VisibilityIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Delete">
+            <IconButton size="small" onClick={() => handleDelete(params.row.id)} color="error">
+              <DeleteIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        </Box>
       ),
     },
   ];

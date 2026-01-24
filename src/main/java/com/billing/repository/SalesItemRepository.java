@@ -2,6 +2,8 @@ package com.billing.repository;
 
 import com.billing.entity.SalesItem;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.billing.util.RepositoryFilterSpecification;
@@ -16,6 +18,9 @@ public interface SalesItemRepository extends BaseRepository<SalesItem, Long> {
             cb.equal(root.get("salesOrder").get("id"), salesOrderId);
         return findAll(Specification.where(filterSpec).and(salesOrderSpec));
     }
+    
+    @Query("SELECT si FROM SalesItem si LEFT JOIN FETCH si.readyItem LEFT JOIN FETCH si.goodsType WHERE si.salesOrder.id = :salesOrderId AND si.deletedAt IS NULL")
+    List<SalesItem> findBySalesOrderIdWithRelations(@Param("salesOrderId") Long salesOrderId);
     
     default List<SalesItem> findByGoodsTypeId(Long goodsTypeId) {
         Specification<SalesItem> filterSpec = RepositoryFilterSpecification.withOrganizationAndCompany();

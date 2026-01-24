@@ -35,6 +35,7 @@ import ListReadyItem from './pages/ready-item/ListReadyItem';
 // Sales Order
 import CreateSalesOrder from './pages/sales-order/CreateSalesOrder';
 import ListSalesOrder from './pages/sales-order/ListSalesOrder';
+import ViewSalesOrder from './pages/sales-order/ViewSalesOrder';
 // Purchase Order
 import CreatePurchaseOrder from './pages/purchase-order/CreatePurchaseOrder';
 import ListPurchaseOrder from './pages/purchase-order/ListPurchaseOrder';
@@ -281,6 +282,14 @@ function App() {
                 element={
                   <AppLayout>
                     <ListSalesOrder />
+                  </AppLayout>
+                }
+              />
+              <Route
+                path="/sales-orders/view/:id"
+                element={
+                  <AppLayout>
+                    <ViewSalesOrder />
                   </AppLayout>
                 }
               />
