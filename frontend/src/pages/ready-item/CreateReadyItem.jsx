@@ -44,6 +44,9 @@ const CreateReadyItem = () => {
     'sheet',
   ];
 
+  // Quality options for dropdown
+  const qualityOptions = ['STANDARD', 'M1', 'M2', 'M3'];
+
   const [formData, setFormData] = useState({
     id: null,
     name: '',
@@ -51,12 +54,15 @@ const CreateReadyItem = () => {
     unit: '',
     description: '',
     goodsTypeId: null,
+    openingStock: '',
+    openingStockQuality: 'STANDARD',
   });
 
   const [errors, setErrors] = useState({
     name: '',
     code: '',
     unit: '',
+    openingStock: '',
   });
 
   const handleChange = (e) => {
@@ -69,7 +75,7 @@ const CreateReadyItem = () => {
   };
 
   const validateForm = () => {
-    const newErrors = { name: '', code: '', unit: '' };
+    const newErrors = { name: '', code: '', unit: '', openingStock: '' };
     let isValid = true;
 
     if (!formData.name.trim()) {
@@ -82,6 +88,12 @@ const CreateReadyItem = () => {
     }
     if (!formData.unit.trim()) {
       newErrors.unit = 'Unit is required';
+      isValid = false;
+    }
+
+    // Validate opening stock
+    if (formData.openingStock && (isNaN(formData.openingStock) || Number(formData.openingStock) < 0)) {
+      newErrors.openingStock = 'Opening stock must be a positive number or zero';
       isValid = false;
     }
 
@@ -105,12 +117,14 @@ const CreateReadyItem = () => {
         unit: formData.unit.trim(),
         description: formData.description.trim() || null,
         goodsTypeId: formData.goodsTypeId || null,
+        openingStock: formData.openingStock ? Number(formData.openingStock) : null,
+        openingStockQuality: formData.openingStockQuality || null,
       };
 
       await upsertReadyItem(payload);
       setSuccess('Ready item saved successfully!');
       setTimeout(() => {
-        setFormData({ id: null, name: '', code: '', unit: '', description: '', goodsTypeId: null });
+        setFormData({ id: null, name: '', code: '', unit: '', description: '', goodsTypeId: null, openingStock: '', openingStockQuality: 'STANDARD' });
       }, 2000);
     } catch (err) {
       setError(err.response?.data?.message || err.message || 'Failed to save ready item');
@@ -120,8 +134,8 @@ const CreateReadyItem = () => {
   };
 
   const handleClear = () => {
-    setFormData({ id: null, name: '', code: '', unit: '', description: '', goodsTypeId: null });
-    setErrors({ name: '', code: '', unit: '' });
+    setFormData({ id: null, name: '', code: '', unit: '', description: '', goodsTypeId: null, openingStock: '', openingStockQuality: 'STANDARD' });
+    setErrors({ name: '', code: '', unit: '', openingStock: '' });
     setError('');
     setSuccess('');
   };
@@ -177,6 +191,39 @@ const CreateReadyItem = () => {
             </Grid>
             <Grid item xs={12}>
               <TextField fullWidth label="Description" name="description" value={formData.description} onChange={handleChange} disabled={loading} multiline rows={3} />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                type="number"
+                label="Opening Stock"
+                name="openingStock"
+                value={formData.openingStock}
+                onChange={handleChange}
+                error={!!errors.openingStock}
+                helperText={errors.openingStock || 'Initial stock quantity (optional)'}
+                disabled={loading}
+                inputProps={{ min: 0, step: '0.01' }}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <FormControl fullWidth disabled={loading}>
+                <InputLabel id="opening-stock-quality-select-label">Opening Stock Quality</InputLabel>
+                <Select
+                  labelId="opening-stock-quality-select-label"
+                  id="opening-stock-quality-select"
+                  name="openingStockQuality"
+                  value={formData.openingStockQuality}
+                  label="Opening Stock Quality"
+                  onChange={handleChange}
+                >
+                  {qualityOptions.map((quality) => (
+                    <MenuItem key={quality} value={quality}>
+                      {quality}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
             </Grid>
             <Grid item xs={12}>
               <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>

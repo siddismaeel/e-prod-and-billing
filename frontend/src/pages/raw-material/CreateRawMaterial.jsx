@@ -53,12 +53,14 @@ const CreateRawMaterial = () => {
     unit: '',
     description: '',
     goodsTypeId: null,
+    openingStock: '',
   });
 
   const [errors, setErrors] = useState({
     name: '',
     code: '',
     unit: '',
+    openingStock: '',
   });
 
   const handleChange = (e) => {
@@ -85,6 +87,7 @@ const CreateRawMaterial = () => {
       name: '',
       code: '',
       unit: '',
+      openingStock: '',
     };
 
     let isValid = true;
@@ -101,6 +104,12 @@ const CreateRawMaterial = () => {
 
     if (!formData.unit.trim()) {
       newErrors.unit = 'Unit is required';
+      isValid = false;
+    }
+
+    // Validate opening stock
+    if (formData.openingStock && (isNaN(formData.openingStock) || Number(formData.openingStock) < 0)) {
+      newErrors.openingStock = 'Opening stock must be a positive number or zero';
       isValid = false;
     }
 
@@ -127,6 +136,7 @@ const CreateRawMaterial = () => {
         unit: formData.unit.trim(),
         description: formData.description.trim() || null,
         goodsTypeId: formData.goodsTypeId || null,
+        openingStock: formData.openingStock ? Number(formData.openingStock) : null,
       };
 
       await upsertRawMaterial(payload);
@@ -141,6 +151,7 @@ const CreateRawMaterial = () => {
           unit: '',
           description: '',
           goodsTypeId: null,
+          openingStock: '',
         });
       }, 2000);
     } catch (err) {
@@ -159,11 +170,13 @@ const CreateRawMaterial = () => {
       unit: '',
       description: '',
       goodsTypeId: null,
+      openingStock: '',
     });
     setErrors({
       name: '',
       code: '',
       unit: '',
+      openingStock: '',
     });
     setError('');
     setSuccess('');
@@ -262,6 +275,21 @@ const CreateRawMaterial = () => {
                 disabled={loading}
                 multiline
                 rows={3}
+              />
+            </Grid>
+
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                type="number"
+                label="Opening Stock"
+                name="openingStock"
+                value={formData.openingStock}
+                onChange={handleChange}
+                error={!!errors.openingStock}
+                helperText={errors.openingStock || 'Initial stock quantity (optional)'}
+                disabled={loading}
+                inputProps={{ min: 0, step: '0.01' }}
               />
             </Grid>
 

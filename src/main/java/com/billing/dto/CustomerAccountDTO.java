@@ -16,6 +16,8 @@ public class CustomerAccountDTO {
     private Long customerId;
     private String customerName;
     private BigDecimal openingBalance;
+    private BigDecimal openingDebitBalance;
+    private BigDecimal openingCreditBalance;
     private BigDecimal currentBalance;
     private BigDecimal totalReceivable;
     private BigDecimal totalPayable;

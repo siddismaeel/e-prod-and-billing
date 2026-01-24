@@ -26,6 +26,12 @@ public class CustomerAccount extends BaseModel {
     @Column(name = "opening_balance", nullable = false)
     private BigDecimal openingBalance;
 
+    @Column(name = "opening_debit_balance")
+    private BigDecimal openingDebitBalance;
+
+    @Column(name = "opening_credit_balance")
+    private BigDecimal openingCreditBalance;
+
     @Column(name = "current_balance", nullable = false)
     private BigDecimal currentBalance;
 

@@ -9,6 +9,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -18,6 +20,7 @@ public class ReadyItemService {
 
     private final ReadyItemRepository readyItemRepository;
     private final GoodsTypeRepository goodsTypeRepository;
+    private final ReadyItemStockService readyItemStockService;
 
     @Transactional
     public ReadyItemDTO upsertReadyItem(ReadyItemDTO dto) {
@@ -42,6 +45,23 @@ public class ReadyItemService {
         }
 
         readyItem = readyItemRepository.save(readyItem);
+        
+        // Create initial stock record if opening stock is provided and ready item is new
+        if (dto.getOpeningStock() != null && dto.getId() == null && dto.getOpeningStock().compareTo(BigDecimal.ZERO) > 0) {
+            String quality = dto.getOpeningStockQuality() != null && !dto.getOpeningStockQuality().trim().isEmpty()
+                ? dto.getOpeningStockQuality()
+                : "STANDARD";
+            
+            readyItemStockService.recordDailyStock(
+                readyItem.getId(),
+                LocalDate.now(),
+                quality,
+                dto.getOpeningStock(),  // openingStock
+                BigDecimal.ZERO,        // quantityProduced
+                BigDecimal.ZERO         // quantitySold
+            );
+        }
+        
         return convertToDTO(readyItem);
     }
 

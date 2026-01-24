@@ -4,14 +4,17 @@ import com.billing.dto.CustomerDTO;
 import com.billing.dto.CustomerDropdownDTO;
 import com.billing.entity.Company;
 import com.billing.entity.Customer;
+import com.billing.entity.CustomerAccount;
 import com.billing.entity.Organization;
 import com.billing.repository.CompanyRepository;
+import com.billing.repository.CustomerAccountRepository;
 import com.billing.repository.CustomerRepository;
 import com.billing.repository.OrganizationRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -22,6 +25,7 @@ public class CustomerService {
     private final CustomerRepository customerRepository;
     private final OrganizationRepository organizationRepository;
     private final CompanyRepository companyRepository;
+    private final CustomerAccountRepository customerAccountRepository;
 
     @Transactional
     public CustomerDTO upsertCustomer(CustomerDTO dto) {
@@ -51,6 +55,29 @@ public class CustomerService {
         }
 
         customer = customerRepository.save(customer);
+        
+        // Create CustomerAccount with opening balances if provided and customer is new
+        if ((dto.getOpeningDebitBalance() != null || dto.getOpeningCreditBalance() != null) && dto.getId() == null) {
+            CustomerAccount account = new CustomerAccount();
+            account.setCustomer(customer);
+            
+            BigDecimal debitBalance = dto.getOpeningDebitBalance() != null ? dto.getOpeningDebitBalance() : BigDecimal.ZERO;
+            BigDecimal creditBalance = dto.getOpeningCreditBalance() != null ? dto.getOpeningCreditBalance() : BigDecimal.ZERO;
+            
+            account.setOpeningDebitBalance(debitBalance);
+            account.setOpeningCreditBalance(creditBalance);
+            account.setOpeningBalance(debitBalance.subtract(creditBalance)); // Calculate net opening balance
+            account.setCurrentBalance(account.getOpeningBalance());
+            
+            // Set other fields to zero
+            account.setTotalReceivable(BigDecimal.ZERO);
+            account.setTotalPayable(BigDecimal.ZERO);
+            account.setTotalPaid(BigDecimal.ZERO);
+            account.setTotalPaidOut(BigDecimal.ZERO);
+            
+            customerAccountRepository.save(account);
+        }
+        
         return convertToDTO(customer);
     }
 

@@ -9,6 +9,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -18,6 +20,7 @@ public class RawMaterialService {
 
     private final RawMaterialRepository rawMaterialRepository;
     private final GoodsTypeRepository goodsTypeRepository;
+    private final RawMaterialStockService rawMaterialStockService;
 
     @Transactional
     public RawMaterialDTO upsertRawMaterial(RawMaterialDTO dto) {
@@ -42,6 +45,18 @@ public class RawMaterialService {
         }
 
         rawMaterial = rawMaterialRepository.save(rawMaterial);
+        
+        // Create initial stock record if opening stock is provided and raw material is new
+        if (dto.getOpeningStock() != null && dto.getId() == null && dto.getOpeningStock().compareTo(BigDecimal.ZERO) > 0) {
+            rawMaterialStockService.recordDailyStock(
+                rawMaterial.getId(),
+                LocalDate.now(),
+                dto.getOpeningStock(),  // openingStock
+                dto.getOpeningStock(),  // quantityAdded
+                BigDecimal.ZERO         // quantityConsumed
+            );
+        }
+        
         return convertToDTO(rawMaterial);
     }
 

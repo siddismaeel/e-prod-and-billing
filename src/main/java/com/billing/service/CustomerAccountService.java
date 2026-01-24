@@ -35,6 +35,8 @@ public class CustomerAccountService {
                     
                     CustomerAccount account = new CustomerAccount();
                     account.setCustomer(customer);
+                    account.setOpeningDebitBalance(BigDecimal.ZERO);
+                    account.setOpeningCreditBalance(BigDecimal.ZERO);
                     account.setOpeningBalance(BigDecimal.ZERO);
                     account.setCurrentBalance(BigDecimal.ZERO);
                     account.setTotalReceivable(BigDecimal.ZERO);
@@ -320,8 +322,17 @@ public class CustomerAccountService {
     }
 
     private void recalculateCurrentBalance(CustomerAccount account) {
+        // Calculate opening balance from debit/credit if not already set
+        BigDecimal openingBalance = account.getOpeningBalance();
+        if (account.getOpeningDebitBalance() != null || account.getOpeningCreditBalance() != null) {
+            BigDecimal debitBalance = account.getOpeningDebitBalance() != null ? account.getOpeningDebitBalance() : BigDecimal.ZERO;
+            BigDecimal creditBalance = account.getOpeningCreditBalance() != null ? account.getOpeningCreditBalance() : BigDecimal.ZERO;
+            openingBalance = debitBalance.subtract(creditBalance);
+            account.setOpeningBalance(openingBalance);
+        }
+        
         // Current Balance = Opening Balance + Total Receivable - Total Payable - Total Paid + Total Paid Out
-        BigDecimal balance = account.getOpeningBalance()
+        BigDecimal balance = openingBalance
                 .add(account.getTotalReceivable())
                 .subtract(account.getTotalPayable())
                 .subtract(account.getTotalPaid())
@@ -342,6 +353,8 @@ public class CustomerAccountService {
         }
         
         dto.setOpeningBalance(account.getOpeningBalance() != null ? account.getOpeningBalance() : BigDecimal.ZERO);
+        dto.setOpeningDebitBalance(account.getOpeningDebitBalance() != null ? account.getOpeningDebitBalance() : BigDecimal.ZERO);
+        dto.setOpeningCreditBalance(account.getOpeningCreditBalance() != null ? account.getOpeningCreditBalance() : BigDecimal.ZERO);
         dto.setCurrentBalance(account.getCurrentBalance() != null ? account.getCurrentBalance() : BigDecimal.ZERO);
         dto.setTotalReceivable(account.getTotalReceivable() != null ? account.getTotalReceivable() : BigDecimal.ZERO);
         dto.setTotalPayable(account.getTotalPayable() != null ? account.getTotalPayable() : BigDecimal.ZERO);

@@ -1,6 +1,7 @@
 package com.billing.dto;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.PositiveOrZero;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -39,5 +40,10 @@ public class ReadyItemDTO {
     private BigDecimal percentageDeviation;
 
     private LocalDateTime lastPropositionCheck;
+
+    @PositiveOrZero(message = "Opening stock must be positive or zero")
+    private BigDecimal openingStock;
+
+    private String openingStockQuality;
 }
 

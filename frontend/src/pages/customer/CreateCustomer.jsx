@@ -47,6 +47,8 @@ const CreateCustomer = () => {
     address: '',
     organizationId: '',
     companyId: '',
+    openingDebitBalance: '',
+    openingCreditBalance: '',
   });
 
   // Form validation errors
@@ -54,6 +56,8 @@ const CreateCustomer = () => {
     name: '',
     contact: '',
     address: '',
+    openingDebitBalance: '',
+    openingCreditBalance: '',
   });
 
   // Check user role and extract orgId/companyId on component mount
@@ -181,6 +185,8 @@ const CreateCustomer = () => {
       name: '',
       contact: '',
       address: '',
+      openingDebitBalance: '',
+      openingCreditBalance: '',
     };
 
     let isValid = true;
@@ -194,6 +200,18 @@ const CreateCustomer = () => {
     // Validate contact
     if (!formData.contact.trim()) {
       newErrors.contact = 'Contact is required';
+      isValid = false;
+    }
+
+    // Validate opening debit balance
+    if (formData.openingDebitBalance && (isNaN(formData.openingDebitBalance) || Number(formData.openingDebitBalance) < 0)) {
+      newErrors.openingDebitBalance = 'Opening debit balance must be a positive number or zero';
+      isValid = false;
+    }
+
+    // Validate opening credit balance
+    if (formData.openingCreditBalance && (isNaN(formData.openingCreditBalance) || Number(formData.openingCreditBalance) < 0)) {
+      newErrors.openingCreditBalance = 'Opening credit balance must be a positive number or zero';
       isValid = false;
     }
 
@@ -222,6 +240,8 @@ const CreateCustomer = () => {
         address: formData.address.trim() || null,
         organizationId: formData.organizationId ? Number(formData.organizationId) : null,
         companyId: formData.companyId ? Number(formData.companyId) : null,
+        openingDebitBalance: formData.openingDebitBalance ? Number(formData.openingDebitBalance) : null,
+        openingCreditBalance: formData.openingCreditBalance ? Number(formData.openingCreditBalance) : null,
       };
 
       const response = await createCustomer(payload);
@@ -233,6 +253,8 @@ const CreateCustomer = () => {
         address: '',
         organizationId: '',
         companyId: '',
+        openingDebitBalance: '',
+        openingCreditBalance: '',
       });
 
       // Optionally navigate after a delay
@@ -260,11 +282,15 @@ const CreateCustomer = () => {
       address: '',
       organizationId: isSystemAdmin ? '' : (userOrgId ? String(userOrgId) : ''),
       companyId: isSystemAdmin ? '' : (userCompanyId ? String(userCompanyId) : ''),
+      openingDebitBalance: '',
+      openingCreditBalance: '',
     });
     setErrors({
       name: '',
       contact: '',
       address: '',
+      openingDebitBalance: '',
+      openingCreditBalance: '',
     });
     setError('');
     setSuccess('');
@@ -349,6 +375,38 @@ const CreateCustomer = () => {
                 rows={3}
                 disabled={loading}
                 placeholder="Enter customer address"
+              />
+            </Grid>
+
+            {/* Opening Debit Balance */}
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                type="number"
+                label="Opening Debit Balance"
+                name="openingDebitBalance"
+                value={formData.openingDebitBalance}
+                onChange={handleChange}
+                error={!!errors.openingDebitBalance}
+                helperText={errors.openingDebitBalance || 'Amount customer owes (optional)'}
+                disabled={loading}
+                inputProps={{ min: 0, step: '0.01' }}
+              />
+            </Grid>
+
+            {/* Opening Credit Balance */}
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                type="number"
+                label="Opening Credit Balance"
+                name="openingCreditBalance"
+                value={formData.openingCreditBalance}
+                onChange={handleChange}
+                error={!!errors.openingCreditBalance}
+                helperText={errors.openingCreditBalance || 'Amount we owe customer (optional)'}
+                disabled={loading}
+                inputProps={{ min: 0, step: '0.01' }}
               />
             </Grid>
 
